@@ -1,0 +1,1594 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graduating Capacity</title>
+<style>
+:root{
+  --bg:#f5f4f0; --panel:#ffffff; --ink:#1d2430; --muted:#5f6b7a; --line:#dcdad3; --soft:#eeece6;
+  --accent:#1f4e79; --accent-ink:#ffffff; --good:#1c7c4a; --good-bg:#e3f3ea; --bad:#b3261e; --bad-bg:#fbe7e5;
+  --warn:#8a5a00; --warn-bg:#fdf1d8; --chip:#e7eef6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181d; --panel:#1d2128; --ink:#e6e8eb; --muted:#9aa4b1; --line:#323843; --soft:#252a33;
+    --accent:#7fb0e0; --accent-ink:#0f1a26; --good:#6fd39c; --good-bg:#183526; --bad:#ff8a80; --bad-bg:#3d1c1a;
+    --warn:#f3c66b; --warn-bg:#3a2e14; --chip:#263447;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,-apple-system,"Noto Sans",sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 24px 0}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+h1{font-size:19px;margin:0;letter-spacing:.2px}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.chip{display:inline-block;background:var(--chip);border-radius:10px;padding:1px 8px;font-size:12px;margin:2px 2px 0 0;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.danger{color:var(--bad)}
+.link{border:none;background:none;color:var(--accent);padding:2px 4px}
+nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto}
+nav button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 14px;color:var(--muted);white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{padding:18px 24px 40px;max-width:1500px}
+.banner{background:var(--warn-bg);border-bottom:1px solid var(--line);padding:8px 24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+input[type=search]{min-width:240px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:auto}
+.pad{padding:16px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--soft);font-size:12px;font-weight:600;position:sticky;top:0;cursor:pointer;user-select:none;vertical-align:bottom}
+th.nosort{cursor:default}
+td.n,th.n{text-align:right}
+tbody tr:hover{background:var(--soft)}
+tr.click{cursor:pointer}
+.pill{display:inline-block;border-radius:10px;padding:0 8px;font-size:12px;font-weight:600}
+.pos{background:var(--good-bg);color:var(--good)}
+.neg{background:var(--bad-bg);color:var(--bad)}
+.zero{background:var(--warn-bg);color:var(--warn)}
+.muted{color:var(--muted)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.hidden{display:none!important}
+dialog{border:1px solid var(--line);border-radius:10px;padding:0;background:var(--panel);color:var(--ink);width:min(680px,94vw);max-height:90vh}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg-h{padding:14px 18px;border-bottom:1px solid var(--line);font-weight:600;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.dlg-b{padding:16px 18px;overflow:auto;max-height:calc(90vh - 120px)}
+.dlg-f{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+label.inline{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+label input,label select,label textarea{color:var(--ink);font-size:14px}
+.err{color:var(--bad);margin-top:10px;min-height:1em}
+.chips .chip button{border:none;background:none;padding:0 0 0 4px;color:var(--muted);cursor:pointer}
+.calc{background:var(--soft);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-variant-numeric:tabular-nums}
+.calc div{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.calc .tot{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;font-weight:600}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.note{background:var(--warn-bg);color:var(--ink);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px}
+.data-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px}
+.data-actions div{border:1px solid var(--line);border-radius:8px;padding:12px}
+.data-actions p{margin:6px 0 0;color:var(--muted);font-size:12px}
+h3{font-size:15px;margin:0 0 10px}
+.legend{margin-top:16px}
+.legend dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0;font-size:13px}
+.legend dt{font-weight:600;white-space:nowrap}
+.legend dd{margin:0;color:var(--muted)}
+.print-head,.sig{display:none}
+body.locked header,body.locked main,body.locked .banner{display:none!important}
+#connect{display:none;max-width:480px;margin:10vh auto;padding:0 16px}
+#connect h1{margin-bottom:6px}
+body.locked #connect{display:block}
+button:disabled{opacity:.55;cursor:default}
+#sync{align-self:center;padding:3px 10px}
+@media (max-width:700px){header,main,.banner{padding-left:16px;padding-right:16px}.grid{grid-template-columns:1fr}input[type=search]{min-width:0;width:100%}}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body{background:#fff;color:#000;font-size:10.5px}
+  header,.banner,.kpis,.bar,nav,.noprint,.toast{display:none!important}
+  main{padding:0;max-width:none}
+  .tab{display:none!important}
+  #tab-capacity{display:block!important}
+  .print-head{display:block;text-align:center;margin-bottom:6px}
+  .print-head h2{font-size:14px;margin:0}
+  .print-head p{margin:2px 0;font-size:11px}
+  .card{border:none;overflow:visible}
+  th{position:static;background:#e8e8e8!important;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  th,td{border:1px solid #888;padding:3px 5px}
+  tr{break-inside:avoid}
+  tbody tr:hover{background:none}
+  #t-cap td:nth-child(2){white-space:nowrap}
+  thead{display:table-header-group}
+  .pill{background:none!important;color:#000!important;padding:0}
+  .legend{margin-top:8px;padding:0;break-inside:avoid}
+  .legend h3{font-size:11px;margin-bottom:4px}
+  .legend dl{font-size:9.5px;gap:1px 10px}
+  .legend dd{color:#000}
+  .sig{display:flex!important;justify-content:space-between;margin-top:40px;font-size:11px}
+}
+</style>
+</head>
+<body class="locked">
+<div id="connect" class="noprint">
+  <div class="card pad">
+    <h1>Graduating Capacity</h1>
+    <p class="muted">This page holds no data of its own. It works on your department's Google Sheet, so it needs the link and passcode set up for that Sheet.</p>
+    <form onsubmit="connectUI(); return false" class="grid" style="grid-template-columns:1fr">
+      <label>Link to the Sheet's script (ends in /exec)<input id="c-url" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec"></label>
+      <label>Passcode<input id="c-pass" type="password" autocomplete="off"></label>
+      <label class="inline"><input type="checkbox" id="c-remember" checked> Remember on this computer (do not tick on a shared computer)</label>
+      <div class="err" id="c-err" role="alert"></div>
+      <button class="primary" id="c-go">Connect</button>
+    </form>
+  </div>
+</div>
+<header>
+  <div class="top">
+    <div>
+      <h1 id="dept">Graduating Capacity</h1>
+      <div class="sub">Graduating capacity as on <b id="asof"></b> · current AY <span id="curay"></span><br>
+        Last 5 years: <span id="w5"></span><br>Last 3 years: <span id="w3"></span></div>
+    </div>
+    <div class="actions">
+      <span class="pill" id="sync" role="status"></span>
+      <a class="btn hidden" id="open-sheet" target="_blank" rel="noopener">Open Google Sheet</a>
+      <button class="primary" onclick="openStudent()">+ Graduated scholar</button>
+      <button onclick="openFaculty()">+ Faculty member</button>
+      <button onclick="exportXlsx()">Export Excel</button>
+      <button onclick="printReport()">Print / PDF</button>
+    </div>
+  </div>
+  <nav id="nav">
+    <button data-tab="capacity" class="on">Capacity</button>
+    <button data-tab="admissions">Admission cycle</button>
+    <button data-tab="students">Graduated scholars</button>
+    <button data-tab="faculty">Faculty</button>
+    <button data-tab="changes">Changes vs old sheet</button>
+    <button data-tab="log">Activity log</button>
+    <button data-tab="data">Settings &amp; backup</button>
+  </nav>
+</header>
+<div class="banner hidden" id="dirty">
+  <span id="dirty-text"></span>
+  <button class="primary hidden" id="retry" onclick="syncNow()">Try saving again</button>
+</div>
+
+<main>
+  <section id="tab-capacity" class="tab">
+    <div class="kpis" id="kpis"></div>
+    <div class="bar">
+      <input type="search" id="q-cap" placeholder="Search faculty…">
+      <select id="f-cap">
+        <option value="all">All active faculty</option>
+        <option value="over">Over capacity (slots &lt; 0)</option>
+        <option value="full">At capacity (slots = 0)</option>
+        <option value="open">Slots available</option>
+      </select>
+      <span class="muted">Click a row to see how the number was computed.</span>
+    </div>
+    <div class="print-head"><h2 id="p-dept"></h2><p id="p-title"></p><p id="p-win"></p></div>
+    <div class="card"><table id="t-cap"></table></div>
+    <div class="card pad legend"><h3>What the columns mean</h3><dl id="cap-legend"></dl></div>
+    <div class="sig"><span>Prepared by</span><span>Verified by</span><span>Head of the Department</span></div>
+  </section>
+
+  <section id="tab-admissions" class="tab hidden">
+    <div class="card pad" id="adm-pick" style="margin-bottom:16px">
+      <h3>Upload the admission list for a new cycle</h3>
+      <p class="muted" style="margin-top:0">An Excel .xlsx file with one row per student. Required columns: <b>Roll No.</b>, <b>Name of the Scholar</b> and <b>Guide</b>.
+        Put the <b>Co-Guide</b> in its own column, with a semicolon between several names. Gender, Scheme, Programme, Date of Joining and Remarks are kept if present.
+        You will see a preview first. Nothing changes until you confirm.</p>
+      <div class="bar" style="margin-bottom:0">
+        <button class="primary" onclick="$('adm-input').click()">Choose .xlsx file…</button>
+        <input type="file" id="adm-input" class="hidden" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="admFile(this)">
+        <button onclick="admTemplate()">Download blank template</button>
+      </div>
+    </div>
+    <div class="err" id="adm-err" role="alert"></div>
+    <div id="adm-preview" class="hidden">
+      <div class="card pad" style="margin-bottom:16px">
+        <h3>Preview of <span id="adm-file"></span></h3>
+        <div class="grid">
+          <label>Name of this admission cycle<input id="adm-cycle" placeholder="Jan 2027"></label>
+          <label id="adm-sheet-wrap">Sheet in this workbook<select id="adm-sheet" onchange="admSheet(this.value)"></select></label>
+        </div>
+      </div>
+      <div class="kpis" id="adm-sum"></div>
+      <div id="adm-names-card" style="margin-bottom:16px">
+        <h3>Names to confirm</h3>
+        <p class="muted" style="margin-top:0">These names don't exactly match anyone on the Faculty tab.</p>
+        <div class="card"><table id="adm-names"></table></div>
+      </div>
+      <h3>Effect on each faculty member</h3>
+      <div class="note hidden" id="adm-over"></div>
+      <div class="card" style="margin-bottom:16px"><table id="adm-impact"></table></div>
+      <h3>Students in the file</h3>
+      <div class="card" style="margin-bottom:16px"><table id="adm-rows"></table></div>
+      <div class="bar">
+        <button class="primary" id="adm-go" onclick="admConfirm()"></button>
+        <button onclick="admCancel()">Cancel</button>
+      </div>
+    </div>
+    <h3 style="margin-top:20px">Admission cycles</h3>
+    <div class="card" style="margin-bottom:16px"><table id="t-cyc"></table></div>
+    <h3>Scholars on the list</h3>
+    <div class="bar">
+      <input type="search" id="q-sch" placeholder="Search roll no., name, guide…">
+      <select id="f-sch"></select>
+      <span class="muted" id="sch-count"></span>
+    </div>
+    <div class="card"><table id="t-sch"></table></div>
+  </section>
+
+  <section id="tab-students" class="tab hidden">
+    <div class="bar">
+      <input type="search" id="q-st" placeholder="Search roll no., name, guide…">
+      <select id="f-ay"><option value="">All years</option></select>
+      <select id="f-guide"><option value="">All guides</option></select>
+      <span class="muted" id="st-count"></span>
+    </div>
+    <div class="card"><table id="t-st"></table></div>
+  </section>
+
+  <section id="tab-faculty" class="tab hidden">
+    <div class="bar">
+      <input type="search" id="q-fac" placeholder="Search faculty…">
+      <label class="inline"><input type="checkbox" id="show-inactive"> Show former faculty (left / retired)</label>
+    </div>
+    <div class="note">N1 is entered here. The scholars-on-roll counts are entered here too, and each admission upload adds to them. Faculty with no graduates get GC = 1 (CAP 5).</div>
+    <div class="card"><table id="t-fac"></table></div>
+  </section>
+
+  <section id="tab-changes" class="tab hidden">
+    <div class="note">Comparison with <i>Graduating Capacity Computed.xlsx</i>. The new values are computed from the graduated-scholar list using the windows shown above. Only active faculty whose values differ are listed.</div>
+    <div class="card"><table id="t-chg"></table></div>
+  </section>
+
+  <section id="tab-log" class="tab hidden">
+    <div class="card"><table id="t-log"></table></div>
+  </section>
+
+  <section id="tab-data" class="tab hidden">
+    <div class="card pad" style="margin-bottom:16px">
+      <h3>Your data</h3>
+      <div class="note hidden" id="empty-note"><b>This Google Sheet is empty.</b> To bring in your existing data, use <b>Load data file</b> below and choose <code>private/initial_data.json</code>.</div>
+      <p class="muted" style="margin-top:0">Every change is saved to the Google Sheet straight away. Edits made directly in the Sheet appear here when this page is reopened or you come back to it.</p>
+      <div class="data-actions">
+        <div><button onclick="downloadJson()">Save data backup (.json)</button>
+          <p>A copy of all the data as a small file. It contains student details, so keep it private.</p></div>
+        <div><button onclick="$('load-json').click()">Load data file (.json)…</button>
+          <input type="file" id="load-json" accept=".json,application/json" class="hidden" onchange="loadJson(this)">
+          <p>Replaces everything in the Google Sheet with this file.</p></div>
+        <div><button onclick="loadFromSheet().then(() => toast('Latest data loaded')).catch(e => alert(e.message))">Reload from Google Sheet</button>
+          <p>Fetch the latest data now.</p></div>
+        <div><button class="danger" onclick="disconnect()">Disconnect this browser</button>
+          <p>Forget the link and passcode on this computer. The Sheet is not touched.</p></div>
+      </div>
+      <p class="muted" id="data-status"></p>
+    </div>
+    <div class="card pad" style="max-width:640px">
+      <h3>Settings</h3>
+      <div class="grid">
+        <label class="full">Department name (report heading)<input id="s-dept"></label>
+        <label class="full">Reference date — leave blank to always use today's date
+          <input type="date" id="s-ref"></label>
+      </div>
+      <p class="muted">Academic year runs July–June. "Last 5 years" means the 5 completed academic years before the
+        reference date's academic year; "last 3 years" means the 3 completed ones. Use a past date to reproduce an older report.</p>
+      <p class="muted">Credit rules: sole guide 1; with any co-guide, the guide gets 0.5 and every department co-guide gets 0.5
+        (external co-guides are recorded but not credited). GC = MAX(1, GC_5, GC_3), with values below 1 rounded up to 1. CAP = ROUND(5×GC − N1).</p>
+      <div class="err" id="s-err"></div>
+      <button class="primary" onclick="saveSettings()">Save settings</button>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg-st">
+  <form method="dialog" onsubmit="return false">
+    <div class="dlg-h"><span id="st-title">Add graduated scholar</span><button type="button" class="link" onclick="close_('dlg-st')">✕</button></div>
+    <div class="dlg-b">
+      <div class="grid">
+        <label>Roll No.<input id="st-roll" required="" placeholder="PH21D001"></label>
+        <label>Gender<select id="st-gender"><option value="">—</option><option>M</option><option>F</option><option>O</option></select></label>
+        <label class="full">Name of the scholar<input id="st-name" required=""></label>
+        <label>Guide<select id="st-guide"></select></label>
+        <label>Year of graduation<select id="st-ay"></select></label>
+        <div class="full">
+          <label>Co-guide(s) from the department — pick one at a time
+            <select id="st-co-pick" onchange="addCo()"></select>
+          </label>
+          <div class="chips" id="st-co" style="margin-top:6px"></div>
+        </div>
+        <label class="full">External co-guide(s) — separate with “;” (they halve the guide's credit but are not credited themselves)
+          <input id="st-ext" placeholder="Dr. NAME, (MM); Dr. NAME, (IIT Palakkad)"></label>
+        <label class="full">Remarks<input id="st-rem"></label>
+        <label class="inline full" id="st-reduce-wrap"><input type="checkbox" id="st-reduce" checked="">
+          Also reduce the guide's (and department co-guides') <i>scholars currently on roll</i> by 1</label>
+      </div>
+      <div class="calc" id="st-preview" style="margin-top:12px"></div>
+      <div class="err" id="st-err"></div>
+    </div>
+    <div class="dlg-f">
+      <button type="button" class="danger hidden" id="st-del" onclick="delStudent()">Delete</button>
+      <span style="flex:1"></span>
+      <button type="button" onclick="close_('dlg-st')">Cancel</button>
+      <button type="button" class="primary" onclick="saveStudentUI()">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-fac">
+  <form method="dialog" onsubmit="return false">
+    <div class="dlg-h"><span id="fac-title">Add faculty member</span><button type="button" class="link" onclick="close_('dlg-fac')">✕</button></div>
+    <div class="dlg-b">
+      <div class="grid">
+        <label class="full">Name (without “Dr.”)<input id="fac-name" required=""></label>
+        <label>Date of joining<input type="date" id="fac-join"></label>
+        <label class="inline" style="align-self:end"><input type="checkbox" id="fac-active" checked=""> Active in the department</label>
+        <label>Scholars currently on roll — main guide<input type="number" step="1" min="0" id="fac-main" value="0"></label>
+        <label>Scholars currently on roll — co-guide<input type="number" step="1" min="0" id="fac-co" value="0"></label>
+        <label class="full">N1 — students who completed 5 years without project support<input type="number" step="0.5" min="0" id="fac-n1" value="0"></label>
+        <label class="full">Notes<textarea id="fac-notes" rows="2"></textarea></label>
+      </div>
+      <div class="err" id="fac-err"></div>
+    </div>
+    <div class="dlg-f">
+      <button type="button" class="danger hidden" id="fac-del" onclick="delFacultyUI()">Delete</button>
+      <span style="flex:1"></span>
+      <button type="button" onclick="close_('dlg-fac')">Cancel</button>
+      <button type="button" class="primary" onclick="saveFacultyUI()">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-det" style="width:min(820px,96vw)">
+  <div class="dlg-h"><span id="det-title"></span><button type="button" class="link" onclick="close_('dlg-det')">✕</button></div>
+  <div class="dlg-b" id="det-body"></div>
+  <div class="dlg-f"><button onclick="editFromDetail()">Edit faculty details</button><button class="primary" onclick="close_('dlg-det')">Close</button></div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ================================================================ rules */
+
+function roundHalfUp(x){            // Excel ROUND(x, 0): halves go away from zero
+  const y = Number(x.toPrecision(12));
+  return (Math.sign(y) * Math.round(Math.abs(y))) || 0;
+}
+const adjust = gc => gc < 1 ? Math.ceil(gc) : gc;   // =IF(D<1, CEILING(D,1), D)
+
+/* Columns D..O of 'Graduating Capacity Computed.xlsx'. GC has a floor of 1 so new faculty get CAP 5. */
+function capacityRow(c5, c3, n1, rollMain, rollCo){
+  const gc5 = c5/5, gc3 = c3/3, g = adjust(gc5), h = adjust(gc3);
+  const gc = Math.max(1, g, h), k = 5*gc - n1, cap = roundHalfUp(k), total = rollMain + 0.5*rollCo;
+  return {c5, gc5, c3, gc3, gc5_adj:g, gc3_adj:h, gc, n1, k, cap, roll_main:rollMain, roll_co:rollCo, total, available: cap - total};
+}
+
+const ayLabel = y => `${y}-${y+1}`;
+/* Academic year runs July–June: 22-10-2026 is in AY 2026-2027. */
+function windows(ref){
+  const cur = ref.getMonth() >= 6 ? ref.getFullYear() : ref.getFullYear() - 1;
+  const span = n => Array.from({length:n}, (_, i) => cur - n + i);
+  return {current: cur, y5: span(5), y3: span(3)};
+}
+
+/* Sole guide: 1. With any co-guide (internal or external): guide 0.5, each department co-guide 0.5. */
+function studentCredits(s){
+  const hasCo = s.coguides.length > 0;
+  const out = [[s.guide_id, hasCo ? 'Guide' : 'Sole guide', hasCo ? 0.5 : 1]];
+  for (const c of s.coguides) if (c.faculty_id) out.push([c.faculty_id, 'Co-guide', 0.5]);
+  return out;
+}
+
+function normName(raw){
+  let n = String(raw ?? '').trim().replace(/^Dr\.?\s*/i, '').replace(/,?\s*\(.*?\)\s*$/, '').trim().replace(/,$/, '');
+  return n.replace(/\s+/g, ' ').toUpperCase();
+}
+const localISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+
+/* ================================================================ data store */
+
+const emptyData = () => ({savedAt: null, settings: {department: '', ref_date: ''}, faculty: [], students: [], scholars: [], log: [], nextId: 1});
+let D = emptyData();                // current data: {savedAt, settings, faculty, students, scholars, log, nextId}
+
+const facById = id => D.faculty.find(f => f.id === id);
+const newId = () => D.nextId++;
+function log(action, detail){
+  const entry = {ts: new Date().toISOString().slice(0,19).replace('T',' '), action, detail};
+  D.log.unshift(entry);
+  pendingLog.push(entry);
+  D.log.length = Math.min(D.log.length, 2000);
+}
+const refDate = () => D.settings.ref_date ? parseISO(D.settings.ref_date) : new Date();
+
+/* ================================================================ Google Sheet: how the data maps onto each tab */
+
+const CONN_KEY = 'graduating-capacity:connection';
+const LOG_TAB = 'Log', CAP_TAB = 'Capacity';
+let conn = null;                    // {url, pass}
+let revision = 0, synced = null, pendingLog = [], saving = false, again = false, syncError = '', sheetUrl = '', sheetWarnings = [];
+
+const yes = v => /^(1|y|yes|true)$/i.test(String(v ?? '').trim());
+const splitList = s => String(s ?? '').split(';').map(x => x.trim()).filter(Boolean);
+const deptCos = r => r.coguides.filter(c => c.faculty_id).map(c => facById(c.faculty_id)?.name).filter(Boolean).join('; ');
+const extCos = r => r.coguides.filter(c => !c.faculty_id).map(c => c.external_name).join('; ');
+const guideCell = r => facById(r.guide_id)?.name ?? r.guide_name ?? '';
+
+const TABS = {
+  Faculty: {list: () => D.faculty, row: f => ({ID: f.id, Name: f.name, Active: f.active ? 'Yes' : 'No', 'Joined On': f.joined_on ?? '', N1: f.n1 ?? 0,
+    'On Roll (Main Guide)': f.roll_main ?? 0, 'On Roll (Co-Guide)': f.roll_co ?? 0, Notes: f.notes ?? '',
+    'Old Sheet C': f.legacy_c5 ?? '', 'Old Sheet E': f.legacy_c3 ?? '', 'Old Sheet CAP': f.legacy_cap ?? ''})},
+  Graduated: {list: () => D.students, row: s => ({ID: s.id, 'Roll No.': s.roll_no, 'Name of the Scholar': s.name, Gender: s.gender ?? '', Guide: guideCell(s),
+    'Co-Guide (Department)': deptCos(s), 'Co-Guide (External)': extCos(s), 'Year of Graduation': ayLabel(s.grad_year), Remarks: s.remarks ?? ''})},
+  Scholars: {list: () => D.scholars, row: s => ({ID: s.id, 'Roll No.': s.roll_no, 'Name of the Scholar': s.name, Gender: s.gender ?? '', Scheme: s.scheme ?? '', Programme: s.programme ?? '', Guide: guideCell(s),
+    'Co-Guide (Department)': deptCos(s), 'Co-Guide (External)': extCos(s), 'Date of Joining': s.date_of_joining ?? '', 'Admission Cycle': s.cycle ?? '',
+    'Counted in On-Roll': s.counted ? 'Yes' : 'No', 'Uploaded On': s.added_on ?? '', Remarks: s.remarks ?? ''})},
+};
+const logRow = e => ({Time: e.ts, Action: e.action, Details: e.detail});
+const numOr = (v, d) => { const x = Number(v); return v === '' || v == null || !Number.isFinite(x) ? d : x; };
+
+function tabObjects(rows){
+  if (!rows?.length) return [];
+  const head = rows[0];
+  return rows.slice(1).filter(r => r.some(c => String(c).trim())).map(r => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
+}
+
+/* Turns the Sheet's tabs into the app's data. Guides are names in the Sheet (easy to read and edit), ids in the app. */
+function fromSheet(tabs){
+  const d = emptyData();
+  for (const r of tabObjects(tabs.Settings)) if (r.Key in d.settings) d.settings[r.Key] = String(r.Value ?? '').trim();
+  d.faculty = tabObjects(tabs.Faculty).map(r => ({id: Number(r.ID), name: String(r.Name).trim().toUpperCase(), active: yes(r.Active) ? 1 : 0, joined_on: r['Joined On'] || null,
+    n1: numOr(r.N1, 0), roll_main: numOr(r['On Roll (Main Guide)'], 0), roll_co: numOr(r['On Roll (Co-Guide)'], 0), notes: r.Notes ?? '',
+    legacy_c5: numOr(r['Old Sheet C'], null), legacy_c3: numOr(r['Old Sheet E'], null), legacy_cap: numOr(r['Old Sheet CAP'], null)}));
+  const idOf = Object.fromEntries(d.faculty.map(f => [f.name, f.id]));
+  const lookup = raw => idOf[String(raw ?? '').trim().toUpperCase()] ?? null;
+  const people = r => {
+    const guide = String(r.Guide ?? '').trim(), guide_id = lookup(guide);
+    return {guide_id, guide_name: guide_id ? '' : guide, coguides: [
+      ...splitList(r['Co-Guide (Department)']).map(n => lookup(n) ? {faculty_id: lookup(n)} : {external_name: n}),
+      ...splitList(r['Co-Guide (External)']).map(n => ({external_name: n}))]};
+  };
+  d.students = tabObjects(tabs.Graduated).map(r => ({id: Number(r.ID), roll_no: String(r['Roll No.']).trim().toUpperCase(), name: String(r['Name of the Scholar']).trim().toUpperCase(),
+    gender: r.Gender ?? '', grad_year: parseInt(String(r['Year of Graduation']).slice(0, 4)) || 0, remarks: r.Remarks ?? '', ...people(r)}));
+  d.scholars = tabObjects(tabs.Scholars).map(r => ({id: Number(r.ID), roll_no: String(r['Roll No.']).trim().toUpperCase(), name: String(r['Name of the Scholar']).trim().toUpperCase(),
+    gender: r.Gender ?? '', scheme: r.Scheme ?? '', programme: r.Programme ?? '', date_of_joining: r['Date of Joining'] ?? '', cycle: r['Admission Cycle'] ?? '',
+    counted: yes(r['Counted in On-Roll']) ? 1 : 0, added_on: r['Uploaded On'] ?? '', remarks: r.Remarks ?? '', ...people(r)}));
+  d.log = tabObjects(tabs[LOG_TAB]).map(r => ({ts: r.Time, action: r.Action, detail: r.Details})).reverse().slice(0, 2000);
+  d.nextId = 1 + Math.max(0, ...d.faculty.map(f => f.id), ...d.students.map(s => s.id), ...d.scholars.map(s => s.id));
+  sheetWarnings = d.students.filter(s => !s.guide_id).map(s => `${s.roll_no}: guide "${s.guide_name}"`);
+  return d;
+}
+
+/* The Capacity tab is the same table the app shows, written fresh by the app. */
+const r2 = x => Math.round(x*100)/100;
+function capacityTable(st = compute()){
+  const header = CAP_COLS.map(([, label]) => label);
+  const rows = st.faculty.filter(f => f.active).map((f, i) => Object.fromEntries(CAP_COLS.map(([k, label, numeric]) => {
+    const v = k === 'sno' ? i + 1 : f[k];
+    return [label, numeric ? r2(v) : v];
+  })));
+  return {header, rows};
+}
+
+function snapshot(){
+  const snap = {settings: JSON.stringify(D.settings)};
+  for (const [name, t] of Object.entries(TABS)) snap[name] = Object.fromEntries(t.list().map(x => [x.id, JSON.stringify(t.row(x))]));
+  return snap;
+}
+function diffFrom(before, now){
+  const upsert = {}, remove = {};
+  let changed = before.settings !== now.settings;
+  for (const name of Object.keys(TABS)) {
+    upsert[name] = Object.keys(now[name]).filter(id => before[name]?.[id] !== now[name][id]).map(id => JSON.parse(now[name][id]));
+    remove[name] = Object.keys(before[name] ?? {}).filter(id => !(id in now[name]));
+    if (upsert[name].length || remove[name].length) changed = true;
+  }
+  return {upsert, remove, changed};
+}
+
+async function api(action, body = {}){
+  let res;
+  try {
+    res = await (await fetch(conn.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({pass: conn.pass, action, ...body})})).json();
+  } catch {
+    throw new Error('Could not reach the Google Sheet. Check your internet connection. If this is the first time, check that the link ends in /exec and that the script is deployed with access set to "Anyone".');
+  }
+  if (!res.ok) { const e = new Error(res.error || 'The Google Sheet refused this change'); e.auth = res.auth; e.conflict = res.conflict; throw e; }
+  return res;
+}
+
+function persist(){ D.savedAt = new Date().toISOString(); syncNow(); }
+
+async function syncNow(){
+  if (saving) { again = true; return; }
+  saving = true; syncError = ''; showSync();
+  try {
+    do {
+      again = false;
+      const now = snapshot(), d = diffFrom(synced, now), logs = pendingLog.slice();
+      if (!d.changed && !logs.length) break;
+      const st = compute();
+      const res = await api('save', {baseRevision: revision, upsert: d.upsert, remove: d.remove, append: {[LOG_TAB]: logs.map(logRow)},
+        replace: {[CAP_TAB]: capacityTable(st)}, settings: {...D.settings, capacity_as_on: st.ref_date}});
+      revision = res.revision; synced = now; pendingLog.splice(0, logs.length);
+    } while (again);
+    saving = false; showSync(new Date());
+  } catch (e) {
+    saving = false;
+    if (e.conflict) {
+      alert('Someone else changed the data (in the app or directly in the Google Sheet) just before your change.\n\nThe latest data will now be loaded. Your last change was not saved, so please make it again.');
+      await loadFromSheet().catch(err => { syncError = err.message; showSync(); });
+    } else { syncError = e.message; showSync(); }
+  }
+}
+function showSync(savedAt){
+  const el = $('sync');
+  el.className = 'pill ' + (syncError ? 'neg' : saving ? 'zero' : 'pos');
+  if (syncError) el.textContent = 'Not saved';
+  else if (saving) el.textContent = 'Saving to Google Sheet…';
+  else el.textContent = savedAt ? `Saved to Google Sheet ${savedAt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}` : 'Google Sheet connected';
+  $('dirty').classList.toggle('hidden', !syncError && !sheetWarnings.length);
+  $('dirty-text').textContent = syncError ? `Your latest change is not in the Google Sheet yet. ${syncError}`
+    : sheetWarnings.length ? `${sheetWarnings.length} graduated-scholar row(s) in the Sheet name a guide who is not on the Faculty tab, so they earn no credit: ${sheetWarnings.slice(0, 5).join('; ')}${sheetWarnings.length > 5 ? '; …' : ''}` : '';
+  $('retry').classList.toggle('hidden', !syncError);
+}
+
+async function loadFromSheet(){
+  const res = await api('load');
+  D = fromSheet(res.tabs);
+  revision = res.revision; sheetUrl = res.sheetUrl || ''; synced = snapshot(); pendingLog = []; syncError = '';
+  $('open-sheet').href = sheetUrl; $('open-sheet').classList.toggle('hidden', !sheetUrl);
+  refresh(); showSync();
+  writeReportIfStale(res.tabs);
+}
+/* Hand edits in the Sheet, or a new academic year, change the Capacity tab without any save from the app. */
+function writeReportIfStale(tabs){
+  if (!D.faculty.length) return;
+  const st = compute(), t = capacityTable(st);
+  const wanted = JSON.stringify([t.header, ...t.rows.map(r => t.header.map(h => String(r[h])))]);
+  const asOn = tabObjects(tabs.Settings).find(r => r.Key === 'capacity_as_on')?.Value;
+  if (wanted === JSON.stringify(tabs[CAP_TAB]) && asOn === st.ref_date) return;
+  api('save', {reportOnly: true, replace: {[CAP_TAB]: t}, settings: {capacity_as_on: st.ref_date}}).catch(() => {});
+}
+async function refreshIfChanged(){
+  const res = await api('rev');
+  if (res.revision === revision) return false;
+  await loadFromSheet();
+  return true;
+}
+
+/* Replaces everything in the Sheet: the one-time import, or restoring a backup. */
+async function pushEverything(){
+  const replace = {[LOG_TAB]: {header: ['Time', 'Action', 'Details'], rows: [...D.log].reverse().map(logRow)}, [CAP_TAB]: capacityTable()};
+  for (const [name, t] of Object.entries(TABS)) replace[name] = {rows: t.list().map(t.row)};
+  const res = await api('save', {baseRevision: revision, replace, settings: {...D.settings, capacity_as_on: compute().ref_date}});
+  revision = res.revision; synced = snapshot(); pendingLog = [];
+}
+
+/* ---------- connecting ---------- */
+function savedConn(){ try { return JSON.parse(localStorage.getItem(CONN_KEY)); } catch { return null; } }
+function saveConn(c){ try { localStorage.setItem(CONN_KEY, JSON.stringify(c)); } catch {} }
+function forgetConn(){ try { localStorage.removeItem(CONN_KEY); } catch {} }
+
+async function connect(url, pass, remember){
+  conn = {url, pass};
+  await loadFromSheet();
+  if (remember) saveConn(conn); else forgetConn();
+  document.body.classList.remove('locked');
+  if (!D.faculty.length) switchTab('data');
+}
+async function connectUI(){
+  const url = $('c-url').value.trim(), pass = $('c-pass').value;
+  $('c-err').textContent = '';
+  if (!/^https:\/\/script\.google\.com\/(a\/macros\/[^/]+|macros)\/s\/[\w-]+\/exec$/.test(url)) { $('c-err').textContent = 'The link should start with https://script.google.com/ and end in /exec'; return; }
+  if (!pass) { $('c-err').textContent = 'Enter the passcode'; return; }
+  $('c-go').disabled = true; $('c-go').textContent = 'Connecting…';
+  try { await connect(url, pass, $('c-remember').checked); }
+  catch (e) { $('c-err').textContent = e.message; }
+  $('c-go').disabled = false; $('c-go').textContent = 'Connect';
+}
+function disconnect(){
+  if (!confirm('Disconnect this browser from the Google Sheet? You will need the link and passcode to connect again.')) return;
+  forgetConn(); location.reload();
+}
+
+function compute(){
+  const ref = refDate(), w = windows(ref), y5 = new Set(w.y5), y3 = new Set(w.y3);
+  const fac = D.faculty.map(f => ({...f, credits: []}));
+  const by = Object.fromEntries(fac.map(f => [f.id, f]));
+  const students = D.students.map(s => ({...s, guide: by[s.guide_id]?.name ?? s.guide_name ?? '?', ay: ayLabel(s.grad_year),
+      coguides: s.coguides.map(c => ({...c, name: c.faculty_id ? by[c.faculty_id]?.name : c.external_name, external: !c.faculty_id}))}))
+    .sort((a,b) => a.guide.localeCompare(b.guide) || a.grad_year - b.grad_year || a.roll_no.localeCompare(b.roll_no));
+  for (const s of students) for (const [fid, role, credit] of studentCredits(s)) {
+    by[fid]?.credits.push({student_id: s.id, roll_no: s.roll_no, student: s.name, ay: s.ay, grad_year: s.grad_year,
+                           role, credit, in5: y5.has(s.grad_year), in3: y3.has(s.grad_year)});
+  }
+  for (const f of fac) {
+    const sum = k => f.credits.filter(c => c[k]).reduce((a, c) => a + c.credit, 0);
+    Object.assign(f, capacityRow(sum('in5'), sum('in3'), +f.n1 || 0, +f.roll_main || 0, +f.roll_co || 0));
+  }
+  // Report order as in the original sheet: by 5-year credit, then 3-year, then name.
+  const active = fac.filter(f => f.active).sort((a,b) => b.c5 - a.c5 || b.c3 - a.c3 || a.name.localeCompare(b.name));
+  const inactive = fac.filter(f => !f.active).sort((a,b) => a.name.localeCompare(b.name));
+  return {ref_date: localISO(ref), ref_date_setting: D.settings.ref_date || '', department: D.settings.department || 'DEPARTMENT',
+          windows: {current: ayLabel(w.current), y5: w.y5.map(ayLabel), y3: w.y3.map(ayLabel)},
+          faculty: [...active, ...inactive], students};
+}
+
+/* ================================================================ mutations (throw Error with a user message) */
+
+function num(v, field){
+  const x = Number(v || 0);
+  if (!Number.isFinite(x)) throw new Error(`${field} must be a number`);
+  if (x < 0) throw new Error(`${field} cannot be negative`);
+  return x;
+}
+
+function saveStudent(data, sid){
+  const roll = String(data.roll_no || '').trim().toUpperCase();
+  const name = String(data.name || '').trim().replace(/\s+/g, ' ').toUpperCase();
+  if (!roll || !name) throw new Error('Roll number and name are required');
+  const guideId = Number(data.guide_id), year = parseInt(String(data.grad_year).slice(0,4));
+  if (!guideId || !year) throw new Error('Guide and year of graduation are required');
+  const guide = facById(guideId);
+  if (!guide) throw new Error('Unknown guide');
+  if (year < 1990 || year > 2100) throw new Error('Year of graduation looks wrong');
+  const coIds = (data.coguide_ids || []).map(Number);
+  if (coIds.includes(guideId)) throw new Error('The guide cannot also be a co-guide');
+  const ext = String(data.external_coguides || '').split(/[;\n]/).map(s => s.trim()).filter(Boolean);
+  if (D.students.some(s => s.roll_no === roll && s.id !== sid)) throw new Error(`Roll number ${roll} already exists`);
+  const rec = {roll_no: roll, name, gender: String(data.gender || '').trim().toUpperCase().slice(0,1), guide_id: guideId,
+               grad_year: year, remarks: String(data.remarks || '').trim(),
+               coguides: [...coIds.map(id => ({faculty_id: id})), ...ext.map(e => ({external_name: e}))]};
+  if (sid == null) {
+    sid = newId();
+    D.students.push({id: sid, ...rec});
+    log('add student', `${roll} ${name} — guide ${guide.name}, AY ${ayLabel(year)}`);
+    D.scholars = D.scholars.filter(x => x.roll_no !== roll);
+    if (data.reduce_roll) {
+      guide.roll_main = Math.max((+guide.roll_main || 0) - 1, 0);
+      for (const c of coIds) { const f = facById(c); f.roll_co = Math.max((+f.roll_co || 0) - 1, 0); }
+      log('update roll', `On-roll count reduced for guide/co-guides of ${roll}`);
+    }
+  } else {
+    const s = D.students.find(x => x.id === sid);
+    if (!s) throw new Error('Student not found');
+    Object.assign(s, rec);
+    log('edit student', `${roll} ${name} — guide ${guide.name}, AY ${ayLabel(year)}`);
+  }
+  persist();
+  return sid;
+}
+
+function deleteStudent(sid){
+  const i = D.students.findIndex(s => s.id === sid);
+  if (i < 0) throw new Error('Student not found');
+  const [s] = D.students.splice(i, 1);
+  log('delete student', `${s.roll_no} ${s.name}`);
+  persist();
+}
+
+function saveFaculty(data, fid){
+  const name = normName(data.name);
+  if (!name) throw new Error('Name is required');
+  if (D.faculty.some(f => f.name === name && f.id !== fid)) throw new Error(`${name} already exists`);
+  const joined = String(data.joined_on || '').trim() || null;
+  if (joined && !/^\d{4}-\d{2}-\d{2}$/.test(joined)) throw new Error('Joining date must be YYYY-MM-DD');
+  const rec = {name, active: data.active === false ? 0 : 1, joined_on: joined, n1: num(data.n1, 'N1'),
+               roll_main: num(data.roll_main, 'Scholars on roll (main guide)'),
+               roll_co: num(data.roll_co, 'Scholars on roll (co-guide)'), notes: String(data.notes || '').trim()};
+  if (fid == null) {
+    fid = newId();
+    D.faculty.push({id: fid, legacy_c5: null, legacy_c3: null, legacy_cap: null, ...rec});
+    log('add faculty', name + (joined ? `, joined ${joined}` : ''));
+  } else {
+    const f = facById(fid);
+    if (!f) throw new Error('Faculty not found');
+    const changes = Object.keys(rec).filter(k => (f[k] ?? null) !== rec[k]).map(k => `${k}: ${f[k]} → ${rec[k]}`);
+    Object.assign(f, rec);
+    log('edit faculty', `${name}: ${changes.join('; ') || 'no change'}`);
+  }
+  persist();
+  return fid;
+}
+
+function deleteFaculty(fid){
+  const f = facById(fid);
+  if (!f) throw new Error('Faculty not found');
+  const used = [...D.students, ...D.scholars].filter(s => s.guide_id === fid || s.coguides.some(c => c.faculty_id === fid)).length;
+  if (used) throw new Error(`${f.name} is linked to ${used} student record(s). Mark as inactive (left/retired) instead of deleting.`);
+  D.faculty = D.faculty.filter(x => x.id !== fid);
+  log('delete faculty', f.name);
+  persist();
+}
+
+/* ================================================================ files: download helpers, xlsx writer */
+
+function download(name, blob){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+const CRC_TABLE = Array.from({length:256}, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+function crc32(bytes){ let c = 0xFFFFFFFF; for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+
+/* Minimal ZIP (stored, no compression) — enough for an .xlsx. files: [[name, string]] */
+function zip(files){
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const [name, text] of files) {
+    const nameB = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(10, 0, true); h.setUint16(12, 33, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, nameB.length, true);
+    parts.push(h.buffer, nameB, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(14, 33, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true);
+    c.setUint16(28, nameB.length, true); c.setUint32(42, offset, true);
+    central.push(c.buffer, nameB);
+    offset += 30 + nameB.length + data.length;
+  }
+  const cdSize = central.reduce((s, b) => s + b.byteLength, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, e.buffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+const xmlEsc = s => String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+const colLetter = n => { let s = ''; for (n++; n; n = Math.floor((n-1)/26)) s = String.fromCharCode(65 + (n-1) % 26) + s; return s; };
+
+/* Styles: 0 normal, 1 bold, 2 header (bold, fill, wrap, border), 3 border, 4 border + 0.00, 5 title, 6 bold + border */
+const XLSX_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="13"/><name val="Calibri"/></font></fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDE6F0"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF999999"/></left><right style="thin"><color rgb="FF999999"/></right><top style="thin"><color rgb="FF999999"/></top><bottom style="thin"><color rgb="FF999999"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="7">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="2" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1"/>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+/* sheet: {name, rows: [[cell]], widths, merges, freeze, rowHeights, landscape}; cell = value | {v, f, s} */
+function sheetXml(sh){
+  const rows = sh.rows.map((row, r) => {
+    const ht = sh.rowHeights?.[r] ? ` ht="${sh.rowHeights[r]}" customHeight="1"` : '';
+    const cells = row.map((cell, c) => {
+      if (cell == null || cell === '') return '';
+      const o = typeof cell === 'object' ? cell : {v: cell};
+      const ref = colLetter(c) + (r+1), s = o.s ? ` s="${o.s}"` : '';
+      if (o.f) return `<c r="${ref}"${s}><f>${xmlEsc(o.f)}</f>${o.v == null ? '' : `<v>${o.v}</v>`}</c>`;
+      if (typeof o.v === 'number') return `<c r="${ref}"${s}><v>${o.v}</v></c>`;
+      if (o.v == null) return `<c r="${ref}"${s}/>`;
+      return `<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${xmlEsc(o.v)}</t></is></c>`;
+    }).join('');
+    return `<row r="${r+1}"${ht}>${cells}</row>`;
+  }).join('');
+  const pane = sh.freeze ? `<pane xSplit="${sh.freeze[0]}" ySplit="${sh.freeze[1]}" topLeftCell="${colLetter(sh.freeze[0])}${sh.freeze[1]+1}" activePane="bottomRight" state="frozen"/>` : '';
+  const cols = sh.widths ? `<cols>${sh.widths.map((w, i) => `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+  const merges = sh.merges?.length ? `<mergeCells count="${sh.merges.length}">${sh.merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '';
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+${sh.landscape ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : ''}<sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>
+<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rows}</sheetData>${merges}
+<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>
+${sh.landscape ? '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>' : ''}</worksheet>`;
+}
+
+function makeXlsx(sheets){
+  const ns = 'http://schemas.openxmlformats.org';
+  const files = [
+    ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="${ns}/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`],
+    ['_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="${ns}/package/2006/relationships"><Relationship Id="rId1" Type="${ns}/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="${ns}/spreadsheetml/2006/main" xmlns:r="${ns}/officeDocument/2006/relationships"><sheets>
+${sheets.map((s, i) => `<sheet name="${xmlEsc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets>
+<definedNames>${sheets.map((s, i) => s.printTitles ? `<definedName name="_xlnm.Print_Titles" localSheetId="${i}">'${xmlEsc(s.name)}'!${s.printTitles}</definedName>` : '').join('')}</definedNames>
+<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`],
+    ['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="${ns}/package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i+1}" Type="${ns}/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}
+<Relationship Id="rId${sheets.length+1}" Type="${ns}/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+    ['xl/styles.xml', XLSX_STYLES],
+    ...sheets.map((s, i) => [`xl/worksheets/sheet${i+1}.xml`, sheetXml(s)]),
+  ];
+  return zip(files);
+}
+
+function buildWorkbook(st){
+  const active = st.faculty.filter(f => f.active);
+  const asOn = st.ref_date.split('-').reverse().join('-');
+  const headers = ['S. No.', 'Guide', 'Number of scholars graduated in the last 5 years', 'GC_5',
+    'Number of scholars graduated in the last 3 years', 'GC_3', 'GC_5_Adjusted', 'GC_3_Adjusted', 'GC',
+    'No. of students completed 5 years and without project support (N1)', '5*GC - N1', 'CAP on the number of students',
+    'No. of scholars currently in the roll (As a main guide)', 'No. of scholars currently in the roll (As a co-guide)',
+    'TOTAL = M + 0.5* N', 'Available slots = L - O'];
+  const B = v => ({v, s: 3}), F2 = (f, v) => ({f, v, s: 4}), F = (f, v) => ({f, v, s: 3});
+  const rows = [
+    [{v: st.department, s: 5}],
+    [{v: `GRADUATING CAPACITY AS ON ${asOn} (last 5 years: AY ${st.windows.y5[0]} to ${st.windows.y5.at(-1)}; last 3 years: AY ${st.windows.y3[0]} to ${st.windows.y3.at(-1)})`, s: 5}],
+    headers.map(h => ({v: h, s: 2})),
+  ];
+  active.forEach((f, i) => {
+    const r = 4 + i;
+    rows.push([B(i+1), B(f.name), B(f.c5), F2(`C${r}/5`, f.gc5), B(f.c3), F2(`E${r}/3`, f.gc3),
+      F2(`IF(D${r}<1,CEILING(D${r},1),D${r})`, f.gc5_adj), F2(`IF(F${r}<1,CEILING(F${r},1),F${r})`, f.gc3_adj),
+      F2(`MAX(1,G${r},H${r})`, f.gc), B(f.n1), F2(`5*I${r}-J${r}`, f.k), F(`ROUND(K${r},0)`, f.cap),
+      B(f.roll_main), B(f.roll_co), F(`M${r}+0.5*N${r}`, f.total), F(`L${r}-O${r}`, f.available)]);
+  });
+  const last = 3 + active.length, sum = k => active.reduce((a, f) => a + f[k], 0);
+  rows.push([null, {v: 'TOTAL', s: 6}, null, null, null, null, null, null, null, null, null,
+    ...['cap', 'roll_main', 'roll_co', 'total', 'available'].map((k, j) => ({f: `SUM(${'LMNOP'[j]}4:${'LMNOP'[j]}${last})`, v: sum(k), s: 6}))]);
+  const main = {name: 'Graduating Capacity', rows, widths: [6, 30, 13, 8, 13, 8, 10, 10, 8, 16, 9, 11, 13, 13, 11, 11],
+    merges: ['A1:P1', 'A2:P2'], freeze: [2, 3], rowHeights: {2: 75}, landscape: true, printTitles: '$3:$3'};
+
+  const bold = arr => arr.map(v => ({v, s: 1}));
+  const credit = {name: 'Credit breakdown', rows: [bold(['Faculty', 'Roll No.', 'Scholar', 'Year of Graduation', 'Role', 'Credit', 'Counted in last 5 years', 'Counted in last 3 years'])],
+    widths: [28, 12, 32, 16, 12, 8, 12, 12], freeze: [0, 1]};
+  for (const f of active) for (const c of [...f.credits].sort((a, b) => a.grad_year - b.grad_year || a.roll_no.localeCompare(b.roll_no)))
+    credit.rows.push([f.name, c.roll_no, c.student, c.ay, c.role, c.credit, c.in5 ? 'Yes' : 'No', c.in3 ? 'Yes' : 'No']);
+
+  const reg = {name: 'Graduated scholars', rows: [bold(['S.No.', 'Roll No.', 'Name of the Scholar', 'Gender', 'Guide', 'Co-Guide', 'Year of Graduation', 'Remarks'])],
+    widths: [7, 12, 32, 8, 30, 45, 16, 20], freeze: [0, 1]};
+  st.students.forEach((s, i) => reg.rows.push([i+1, s.roll_no, s.name, s.gender, 'Dr. ' + s.guide,
+    s.coguides.map(c => (c.external ? '' : 'Dr. ') + c.name).join('; '), s.ay, s.remarks]));
+
+  const rules = {name: 'Rules', widths: [42, 70], rows: [
+    ['Reference date', st.ref_date], ['Last 5 years', st.windows.y5.join(', ')], ['Last 3 years', st.windows.y3.join(', ')],
+    ['Credit (sole guide)', 1], ['Credit (guide, when there is a co-guide)', 0.5], ['Credit (each department co-guide)', 0.5],
+    ['GC', 'MAX(1, adjusted C/5, adjusted E/3); values below 1 are rounded up to 1'], ['CAP', 'ROUND(5*GC - N1, 0)'],
+    ['TOTAL', 'Scholars on roll as main guide + 0.5 × scholars on roll as co-guide']].map(([a, b]) => [{v: a, s: 1}, b])};
+  return makeXlsx([main, credit, reg, rules]);
+}
+
+/* ================================================================ UI */
+
+let S = null, byId = {};
+let sortCap = {k: null, d: 1};
+let editingStudent = null, editingFaculty = null, detailId = null, coChosen = [];
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = x => (Math.round(x*100)/100).toFixed(2).replace(/\.?0+$/, '') || '0';
+const f2 = x => (Math.round(x*100)/100).toFixed(2);
+const dmy = iso => iso ? iso.split('-').reverse().join('-') : '';
+const slot = v => `<span class="pill ${v>0?'pos':v<0?'neg':'zero'}">${fmt(v)}</span>`;
+const stamp = () => localISO(new Date());
+
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2400); }
+function close_(id){ $(id).close(); }
+
+function refresh(){
+  S = compute();
+  byId = Object.fromEntries(S.faculty.map(f => [f.id, f]));
+  $('dept').textContent = S.department;
+  $('asof').textContent = dmy(S.ref_date) + (S.ref_date_setting ? ' (fixed)' : '');
+  $('curay').textContent = S.windows.current;
+  $('w5').innerHTML = S.windows.y5.map(y => `<span class="chip">${y}</span>`).join('');
+  $('w3').innerHTML = S.windows.y3.map(y => `<span class="chip">${y}</span>`).join('');
+  $('p-dept').textContent = S.department;
+  $('p-title').textContent = 'GRADUATING CAPACITY AS ON ' + dmy(S.ref_date);
+  $('p-win').textContent = `Last 5 years: AY ${S.windows.y5[0]} to ${S.windows.y5.at(-1)} · Last 3 years: AY ${S.windows.y3[0]} to ${S.windows.y3.at(-1)}`;
+  $('s-dept').value = S.department; $('s-ref').value = S.ref_date_setting;
+  $('empty-note').classList.toggle('hidden', D.faculty.length > 0);
+  $('data-status').textContent = `${D.faculty.length} faculty, ${D.students.length} graduated scholars, ${D.scholars.length} scholars on the list.`;
+  fillFilters();
+  renderKpis(); renderCap(); renderAdm(); renderStudents(); renderFaculty(); renderChanges(); renderLog();
+}
+const active = () => S.faculty.filter(f => f.active);
+
+function renderKpis(){
+  const a = active(), sum = k => a.reduce((s, f) => s + f[k], 0);
+  const counted = S.students.filter(s => S.windows.y5.includes(s.ay)).length;
+  $('kpis').innerHTML = [
+    [a.length, 'Active faculty'],
+    [fmt(sum('cap')), 'Total CAP (sum of column L)'],
+    [fmt(sum('total')), 'Scholars on roll (M + 0.5 N)'],
+    [fmt(a.filter(f => f.available > 0).reduce((s, f) => s + f.available, 0)), 'Open slots (where CAP > TOTAL)'],
+    [a.filter(f => f.available < 0).length, 'Faculty over capacity'],
+    [`${counted} / ${S.students.length}`, 'Graduates in 5-yr window / on record'],
+  ].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
+}
+
+/* [key, header, numeric, legend text] — the legend under the table and the header tooltips both come from here. */
+const CAP_COLS = [
+  ['sno','S. No.',1,'Serial number. Faculty are listed by C, then E, then name.'],
+  ['name','Guide',0,'Faculty member (active faculty only). Click a row to see the scholars behind the numbers.'],
+  ['c5','Graduated last 5 yrs (C)',1,'Credit for scholars who graduated in the last 5 completed academic years (July–June; the current year is not counted). Sole guide gets 1 per scholar; if the scholar had any co-guide, the guide gets 0.5 and each department co-guide gets 0.5.'],
+  ['gc5','GC_5',1,'C ÷ 5 — graduates per year, averaged over 5 years.'],
+  ['c3','Graduated last 3 yrs (E)',1,'The same credit as C, counted over the last 3 completed academic years.'],
+  ['gc3','GC_3',1,'E ÷ 3 — graduates per year, averaged over 3 years.'],
+  ['gc5_adj','GC_5 adj.',1,'GC_5, with any value between 0 and 1 rounded up to 1.'],
+  ['gc3_adj','GC_3 adj.',1,'GC_3, with any value between 0 and 1 rounded up to 1.'],
+  ['gc','GC',1,'Graduating capacity: the larger of GC_5 adj. and GC_3 adj., never less than 1 (so new faculty start at 1).'],
+  ['n1','N1',1,'Scholars of this guide who have completed 5 years and are without project support (entered on the Faculty tab).'],
+  ['k','5·GC − N1',1,'Five times GC, minus N1, before rounding.'],
+  ['cap','CAP',1,'Cap on the number of scholars: 5·GC − N1 rounded to the nearest whole number (halves round up).'],
+  ['roll_main','On roll — main (M)',1,'Scholars currently on roll with this faculty member as main guide.'],
+  ['roll_co','On roll — co (N)',1,'Scholars currently on roll with this faculty member as co-guide.'],
+  ['total','TOTAL = M + 0.5N',1,'Current load: main-guide scholars count 1, co-guided scholars count 0.5.'],
+  ['available','Available slots',1,'CAP − TOTAL. Positive (green): can take that many more scholars. Zero (amber): at capacity. Negative (red): over capacity by that much.'],
+];
+$('cap-legend').innerHTML = CAP_COLS.map(([, l,, d]) => `<dt>${l}</dt><dd>${d}</dd>`).join('');
+function renderCap(){
+  const q = $('q-cap').value.trim().toUpperCase(), f = $('f-cap').value;
+  let rows = active().map((x, i) => ({...x, sno: i+1}));
+  if (q) rows = rows.filter(r => r.name.includes(q));
+  if (f === 'over') rows = rows.filter(r => r.available < 0);
+  if (f === 'full') rows = rows.filter(r => r.available === 0);
+  if (f === 'open') rows = rows.filter(r => r.available > 0);
+  if (sortCap.k) rows.sort((a, b) => (a[sortCap.k] > b[sortCap.k] ? 1 : a[sortCap.k] < b[sortCap.k] ? -1 : 0) * sortCap.d);
+  const head = '<thead><tr>' + CAP_COLS.map(([k, l, n, d]) => `<th class="${n?'n':''}" data-k="${k}" title="${d}">${l}${sortCap.k===k ? (sortCap.d>0?' ▲':' ▼') : ''}</th>`).join('') + '</tr></thead>';
+  const body = rows.map(r => `<tr class="click" data-id="${r.id}">` + CAP_COLS.map(([k,, n]) => {
+    let v = r[k];
+    if (k === 'available') v = slot(v);
+    else if (['gc5','gc3','gc5_adj','gc3_adj','gc','k'].includes(k)) v = f2(v);
+    else if (n) v = fmt(v);
+    else v = esc(v);
+    return `<td class="${n?'n':''}">${k === 'cap' ? '<b>'+v+'</b>' : v}</td>`;
+  }).join('') + '</tr>').join('');
+  $('t-cap').innerHTML = head + '<tbody>' + (body || `<tr><td colspan="16" class="empty">No faculty match.</td></tr>`) + '</tbody>';
+}
+$('t-cap').addEventListener('click', e => {
+  const th = e.target.closest('th');
+  if (th) { const k = th.dataset.k; sortCap = sortCap.k === k ? {k, d: -sortCap.d} : {k, d: k === 'name' ? 1 : -1}; if (k === 'sno') sortCap = {k: null, d: 1}; renderCap(); return; }
+  const tr = e.target.closest('tr[data-id]'); if (tr) showDetail(+tr.dataset.id);
+});
+
+function showDetail(id){
+  const f = byId[id]; detailId = id;
+  $('det-title').textContent = 'Dr. ' + f.name + (f.active ? '' : ' (former faculty)');
+  const cr = [...f.credits].sort((a, b) => b.grad_year - a.grad_year || a.roll_no.localeCompare(b.roll_no));
+  $('det-body').innerHTML = `
+    <div class="calc">
+      <div><span>C — credit for graduates, last 5 yrs (${S.windows.y5[0]} … ${S.windows.y5.at(-1)})</span><b>${fmt(f.c5)}</b></div>
+      <div><span>GC_5 = C / 5 = ${f2(f.gc5)} → adjusted (below 1 rounds up)</span><b>${f2(f.gc5_adj)}</b></div>
+      <div><span>E — credit for graduates, last 3 yrs (${S.windows.y3[0]} … ${S.windows.y3.at(-1)})</span><b>${fmt(f.c3)}</b></div>
+      <div><span>GC_3 = E / 3 = ${f2(f.gc3)} → adjusted</span><b>${f2(f.gc3_adj)}</b></div>
+      <div><span>GC = MAX(1, GC_5 adj., GC_3 adj.)</span><b>${f2(f.gc)}</b></div>
+      <div><span>CAP = ROUND(5 × ${f2(f.gc)} − N1 ${fmt(f.n1)}) = ROUND(${f2(f.k)})</span><b>${f.cap}</b></div>
+      <div><span>TOTAL on roll = ${fmt(f.roll_main)} + 0.5 × ${fmt(f.roll_co)}</span><b>${fmt(f.total)}</b></div>
+      <div class="tot"><span>Available slots = CAP − TOTAL</span><span>${slot(f.available)}</span></div>
+    </div>
+    ${f.joined_on ? `<p class="muted">Joined ${dmy(f.joined_on)}.</p>` : ''}${f.notes ? `<p class="muted">${esc(f.notes)}</p>` : ''}
+    <table><thead><tr><th class="nosort">Roll No.</th><th class="nosort">Scholar</th><th class="nosort">Year</th><th class="nosort">Role</th><th class="nosort n">Credit</th><th class="nosort">5 yr</th><th class="nosort">3 yr</th><th class="nosort"></th></tr></thead><tbody>
+    ${cr.map(c => `<tr><td>${esc(c.roll_no)}</td><td>${esc(c.student)}</td><td>${c.ay}</td><td>${c.role}</td><td class="n">${fmt(c.credit)}</td>
+      <td>${c.in5 ? '✓' : '<span class="muted">–</span>'}</td><td>${c.in3 ? '✓' : '<span class="muted">–</span>'}</td>
+      <td><button class="link" onclick="close_('dlg-det');openStudent(${c.student_id})">Edit</button></td></tr>`).join('')
+      || '<tr><td colspan="8" class="empty">No graduated scholars on record.</td></tr>'}
+    </tbody></table>`;
+  $('dlg-det').showModal();
+}
+function editFromDetail(){ close_('dlg-det'); openFaculty(detailId); }
+
+function fillFilters(){
+  const ays = [...new Set(S.students.map(s => s.ay))].sort().reverse();
+  const keepAy = $('f-ay').value, keepG = $('f-guide').value;
+  $('f-ay').innerHTML = '<option value="">All years</option>' + ays.map(a => `<option>${a}</option>`).join('');
+  $('f-guide').innerHTML = '<option value="">All guides / co-guides</option>' +
+    [...S.faculty].sort((a, b) => a.name.localeCompare(b.name)).map(f => `<option value="${f.id}">${esc(f.name)}${f.active ? '' : ' (former)'}</option>`).join('');
+  $('f-ay').value = keepAy; $('f-guide').value = keepG;
+}
+function renderStudents(){
+  const q = $('q-st').value.trim().toUpperCase(), ay = $('f-ay').value, g = +$('f-guide').value;
+  let rows = S.students;
+  if (ay) rows = rows.filter(s => s.ay === ay);
+  if (g) rows = rows.filter(s => s.guide_id === g || s.coguides.some(c => c.faculty_id === g));
+  if (q) rows = rows.filter(s => [s.roll_no, s.name, s.guide, ...s.coguides.map(c => c.name)].join(' ').toUpperCase().includes(q));
+  $('st-count').textContent = `${rows.length} of ${S.students.length} scholars`;
+  $('t-st').innerHTML = `<thead><tr><th class="nosort">#</th><th class="nosort">Roll No.</th><th class="nosort">Name of the scholar</th><th class="nosort">Gender</th><th class="nosort">Guide</th><th class="nosort">Co-guide(s)</th><th class="nosort">Year of graduation</th><th class="nosort"></th></tr></thead><tbody>` +
+    (rows.map((s, i) => `<tr><td class="muted">${i+1}</td><td>${esc(s.roll_no)}</td><td>${esc(s.name)}</td><td>${esc(s.gender)}</td>
+      <td>${esc(s.guide)}</td><td>${s.coguides.map(c => c.external ? `<span class="muted">${esc(c.name)}</span>` : esc(c.name)).join('<br>')}</td>
+      <td>${s.ay}${S.windows.y5.includes(s.ay) ? '' : ' <span class="muted" title="Outside the 5-year window">(not counted)</span>'}</td>
+      <td><button class="link" onclick="openStudent(${s.id})">Edit</button></td></tr>`).join('')
+    || '<tr><td colspan="8" class="empty">No scholars match.</td></tr>') + '</tbody>';
+}
+
+function renderFaculty(){
+  const q = $('q-fac').value.trim().toUpperCase(), inc = $('show-inactive').checked;
+  const rows = [...S.faculty].filter(f => (inc || f.active) && (!q || f.name.includes(q))).sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
+  $('t-fac').innerHTML = `<thead><tr><th class="nosort">Name</th><th class="nosort">Status</th><th class="nosort">Joined</th><th class="nosort n">N1</th><th class="nosort n">On roll — main</th><th class="nosort n">On roll — co</th><th class="nosort n">Graduates on record</th><th class="nosort n">CAP</th><th class="nosort">Notes</th><th class="nosort"></th></tr></thead><tbody>` +
+    rows.map(f => `<tr><td>${esc(f.name)}</td><td>${f.active ? 'Active' : '<span class="muted">Former</span>'}</td><td>${dmy(f.joined_on)}</td>
+      <td class="n">${fmt(f.n1)}</td><td class="n">${fmt(f.roll_main)}</td><td class="n">${fmt(f.roll_co)}</td><td class="n">${f.credits.length}</td>
+      <td class="n">${f.active ? f.cap : '–'}</td><td class="muted">${esc(f.notes)}</td>
+      <td style="white-space:nowrap"><button class="link" onclick="openFaculty(${f.id})">Edit</button><button class="link" onclick="showDetail(${f.id})">Details</button></td></tr>`).join('') + '</tbody>';
+}
+
+function renderChanges(){
+  const rows = active().filter(f => f.legacy_c5 != null && (f.c5 !== f.legacy_c5 || f.c3 !== f.legacy_c3 || f.cap !== f.legacy_cap))
+    .sort((a, b) => (a.cap - a.legacy_cap) - (b.cap - b.legacy_cap));
+  const d = (n, o) => { const x = n - o; return x === 0 ? '<span class="muted">0</span>' : `<span class="pill ${x>0?'pos':'neg'}">${x>0?'+':''}${fmt(x)}</span>`; };
+  $('t-chg').innerHTML = `<thead><tr><th class="nosort">Guide</th><th class="nosort n">C old</th><th class="nosort n">C new</th><th class="nosort n">E old</th><th class="nosort n">E new</th><th class="nosort n">CAP old</th><th class="nosort n">CAP new</th><th class="nosort n">Δ CAP</th></tr></thead><tbody>` +
+    (rows.map(f => `<tr class="click" onclick="showDetail(${f.id})"><td>${esc(f.name)}</td><td class="n">${fmt(f.legacy_c5)}</td><td class="n">${fmt(f.c5)}</td>
+      <td class="n">${fmt(f.legacy_c3)}</td><td class="n">${fmt(f.c3)}</td><td class="n">${fmt(f.legacy_cap)}</td><td class="n"><b>${f.cap}</b></td><td class="n">${d(f.cap, f.legacy_cap)}</td></tr>`).join('')
+    || '<tr><td colspan="8" class="empty">No differences.</td></tr>') + '</tbody>';
+}
+
+function renderLog(){
+  $('t-log').innerHTML = '<thead><tr><th class="nosort">When</th><th class="nosort">Action</th><th class="nosort">Details</th></tr></thead><tbody>' +
+    (D.log.map(r => `<tr><td style="white-space:nowrap">${esc(r.ts)}</td><td>${esc(r.action)}</td><td>${esc(r.detail)}</td></tr>`).join('')
+    || '<tr><td colspan="3" class="empty">No activity yet.</td></tr>') + '</tbody>';
+}
+
+/* ---------- student dialog ---------- */
+function facultyOptions(sel){
+  const a = [...S.faculty].sort((x, y) => x.name.localeCompare(y.name));
+  sel.innerHTML = '<option value="">— choose —</option>' +
+    '<optgroup label="Active faculty">' + a.filter(f => f.active).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('') + '</optgroup>' +
+    '<optgroup label="Former faculty">' + a.filter(f => !f.active).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('') + '</optgroup>';
+}
+function ayOptions(){
+  const cur = +S.windows.current.slice(0, 4), ys = [];
+  for (let y = cur; y >= 2010; y--) ys.push(ayLabel(y));
+  return ys.map(y => `<option value="${y}">${y}${S.windows.y5.includes(y) ? '' : y === S.windows.current ? ' (current — counts from next AY)' : ' (outside window)'}</option>`).join('');
+}
+function openStudent(id){
+  editingStudent = id ?? null;
+  const s = id ? S.students.find(x => x.id === id) : null;
+  $('st-title').textContent = s ? 'Edit graduated scholar' : 'Add graduated scholar';
+  facultyOptions($('st-guide')); facultyOptions($('st-co-pick'));
+  $('st-ay').innerHTML = ayOptions();
+  $('st-roll').value = s?.roll_no || ''; $('st-name').value = s?.name || ''; $('st-gender').value = s?.gender || '';
+  $('st-guide').value = s?.guide_id || ''; $('st-ay').value = s?.ay || S.windows.y5.at(-1);
+  coChosen = s ? s.coguides.filter(c => !c.external).map(c => c.faculty_id) : [];
+  $('st-ext').value = s ? s.coguides.filter(c => c.external).map(c => c.name).join('; ') : '';
+  $('st-rem').value = s?.remarks || '';
+  $('st-reduce-wrap').classList.toggle('hidden', !!s); $('st-reduce').checked = true;
+  $('st-del').classList.toggle('hidden', !s);
+  $('st-err').textContent = '';
+  renderCo(); $('dlg-st').showModal(); $('st-roll').focus();
+}
+function addCo(){ const v = +$('st-co-pick').value; if (v && !coChosen.includes(v)) coChosen.push(v); $('st-co-pick').value = ''; renderCo(); }
+function rmCo(v){ coChosen = coChosen.filter(x => x !== v); renderCo(); }
+function renderCo(){
+  $('st-co').innerHTML = coChosen.map(v => `<span class="chip">${esc(byId[v].name)}<button type="button" onclick="rmCo(${v})">✕</button></span>`).join('') || '<span class="muted">None</span>';
+  preview();
+}
+function preview(){
+  const g = +$('st-guide').value, ay = $('st-ay').value;
+  const ext = $('st-ext').value.split(/[;\n]/).filter(x => x.trim()).length;
+  if (!g) { $('st-preview').innerHTML = '<span class="muted">Choose a guide to see the credit.</span>'; return; }
+  const hasCo = coChosen.length + ext > 0;
+  const lines = [[byId[g].name + (hasCo ? ' (guide)' : ' (sole guide)'), hasCo ? 0.5 : 1], ...coChosen.map(c => [byId[c].name + ' (co-guide)', 0.5])];
+  const where = S.windows.y3.includes(ay) ? 'counted in both the 5-year and 3-year windows'
+    : S.windows.y5.includes(ay) ? 'counted in the 5-year window only' : 'not counted in the current windows';
+  $('st-preview').innerHTML = '<b>Credit this record gives</b>' + lines.map(([n, c]) => `<div><span>${esc(n)}</span><b>${c}</b></div>`).join('') + `<div class="muted">AY ${ay}: ${where}.</div>`;
+}
+['st-guide', 'st-ay', 'st-ext'].forEach(i => $(i).addEventListener('input', preview));
+function saveStudentUI(){
+  try {
+    saveStudent({roll_no: $('st-roll').value, name: $('st-name').value, gender: $('st-gender').value, guide_id: $('st-guide').value,
+      grad_year: $('st-ay').value, coguide_ids: coChosen, external_coguides: $('st-ext').value, remarks: $('st-rem').value,
+      reduce_roll: editingStudent == null && $('st-reduce').checked}, editingStudent);
+    close_('dlg-st'); refresh(); toast(editingStudent ? 'Scholar updated' : 'Scholar added — capacity recomputed');
+  } catch (e) { $('st-err').textContent = e.message; }
+}
+function delStudent(){
+  const s = S.students.find(x => x.id === editingStudent);
+  if (!confirm(`Delete ${s.roll_no} ${s.name}? Their guide's credit will be removed.`)) return;
+  try { deleteStudent(editingStudent); close_('dlg-st'); refresh(); toast('Scholar deleted'); }
+  catch (e) { $('st-err').textContent = e.message; }
+}
+
+/* ---------- faculty dialog ---------- */
+function openFaculty(id){
+  editingFaculty = id ?? null;
+  const f = id ? byId[id] : null;
+  $('fac-title').textContent = f ? 'Edit faculty member' : 'Add faculty member';
+  $('fac-name').value = f?.name || ''; $('fac-join').value = f?.joined_on || (f ? '' : stamp());
+  $('fac-active').checked = f ? !!f.active : true;
+  $('fac-main').value = f?.roll_main ?? 0; $('fac-co').value = f?.roll_co ?? 0; $('fac-n1').value = f?.n1 ?? 0;
+  $('fac-notes').value = f?.notes || ''; $('fac-err').textContent = '';
+  $('fac-del').classList.toggle('hidden', !f);
+  $('dlg-fac').showModal(); $('fac-name').focus();
+}
+function saveFacultyUI(){
+  try {
+    saveFaculty({name: $('fac-name').value, joined_on: $('fac-join').value, active: $('fac-active').checked,
+      roll_main: $('fac-main').value, roll_co: $('fac-co').value, n1: $('fac-n1').value, notes: $('fac-notes').value}, editingFaculty);
+    close_('dlg-fac'); refresh(); toast(editingFaculty ? 'Faculty updated' : 'Faculty member added');
+  } catch (e) { $('fac-err').textContent = e.message; }
+}
+function delFacultyUI(){
+  if (!confirm(`Delete ${byId[editingFaculty].name}?`)) return;
+  try { deleteFaculty(editingFaculty); close_('dlg-fac'); refresh(); toast('Faculty deleted'); }
+  catch (e) { $('fac-err').textContent = e.message; }
+}
+
+/* ---------- settings, save & backup ---------- */
+function saveSettings(){
+  const ref = $('s-ref').value.trim();
+  if (ref && !/^\d{4}-\d{2}-\d{2}$/.test(ref)) { $('s-err').textContent = 'Reference date must be YYYY-MM-DD'; return; }
+  D.settings.ref_date = ref;
+  if ($('s-dept').value.trim()) D.settings.department = $('s-dept').value.trim();
+  log('settings', `Reference date: ${ref || 'today'}`);
+  persist(); refresh(); toast('Settings saved'); $('s-err').textContent = '';
+}
+function downloadJson(){
+  download(`GraduatingCapacity_data_${stamp()}.json`, new Blob([JSON.stringify(D, null, 1)], {type: 'application/json'}));
+}
+async function loadJson(input){
+  const file = input.files[0]; input.value = '';
+  if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (!Array.isArray(d.faculty) || !Array.isArray(d.students)) throw new Error('This is not a Graduating Capacity data file.');
+    d.scholars ??= []; d.log ??= []; d.settings ??= {};
+    if (!confirm(`Replace everything in the Google Sheet with "${file.name}"?\n\n${d.faculty.length} faculty, ${d.students.length} graduated scholars, ${d.scholars.length} scholars on the list.`)) return;
+    await refreshIfChanged();
+    D = {...emptyData(), ...d, settings: {...emptyData().settings, ...d.settings}};
+    D.nextId = 1 + Math.max(0, ...D.faculty.map(f => f.id), ...D.students.map(s => s.id), ...D.scholars.map(s => s.id));
+    log('load data file', file.name);
+    await pushEverything();
+    refresh(); showSync(new Date()); toast('Data loaded into the Google Sheet'); switchTab('capacity');
+  } catch (e) { alert('Could not load the file: ' + e.message); }
+}
+function exportXlsx(){
+  download(`Graduating Capacity ${dmy(S.ref_date)}.xlsx`, buildWorkbook(S));
+}
+function printReport(){ switchTab('capacity'); $('q-cap').value = ''; $('f-cap').value = 'all'; sortCap = {k: null, d: 1}; renderCap(); setTimeout(() => window.print(), 50); }
+function switchTab(t){
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  document.querySelectorAll('.tab').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + t));
+}
+$('nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) switchTab(b.dataset.tab); });
+$('q-cap').addEventListener('input', renderCap); $('f-cap').addEventListener('change', renderCap);
+['q-st', 'f-ay', 'f-guide'].forEach(i => $(i).addEventListener('input', renderStudents));
+['q-fac', 'show-inactive'].forEach(i => $(i).addEventListener('input', renderFaculty));
+
+/* ================================================================ reading an uploaded .xlsx (no libraries) */
+
+async function unzipEntries(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('This is not a .xlsx file. If it is an old .xls file, open it in Excel and save it as .xlsx.');
+  const out = {}, count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  for (let n = 0; n < count; n++) {
+    const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true), extra = dv.getUint16(p + 30, true), comment = dv.getUint16(p + 32, true);
+    const local = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nameLen));
+    const start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+    out[name] = {method, data: u8.subarray(start, start + size)};
+    p += 46 + nameLen + extra + comment;
+  }
+  return out;
+}
+async function zipText(entries, name){
+  const e = entries[name];
+  if (!e) return null;
+  if (e.method === 0) return new TextDecoder().decode(e.data);
+  const stream = new Blob([e.data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Response(stream).text();
+}
+const xmlDoc = t => new DOMParser().parseFromString(t, 'application/xml');
+const xmlAll = (el, tag) => [...el.getElementsByTagNameNS('*', tag)];
+
+function isDateFormat(id, custom){
+  if ((id >= 14 && id <= 22) || (id >= 27 && id <= 36) || (id >= 45 && id <= 47) || (id >= 50 && id <= 58)) return true;
+  const code = custom[id];
+  return !!code && /[ymdh]/i.test(code.replace(/"[^"]*"|\[[^\]]*\]|\\./g, ''));
+}
+const serialToISO = n => new Date(Date.UTC(1899, 11, 30) + Math.round(n) * 864e5).toISOString().slice(0, 10);
+function colIndex(ref){
+  let n = 0;
+  for (const ch of ref) { const c = ch.charCodeAt(0); if (c < 65 || c > 90) break; n = n*26 + c - 64; }
+  return n - 1;
+}
+
+/* Returns [{name, rows: [[cell, ...], ...]}]. Cells are strings, numbers, booleans or ISO dates. */
+async function readXlsx(buf){
+  const zip_ = await unzipEntries(buf);
+  const wbText = await zipText(zip_, 'xl/workbook.xml');
+  if (!wbText) throw new Error('This file has no workbook inside it. Is it really an Excel .xlsx file?');
+  const relsText = await zipText(zip_, 'xl/_rels/workbook.xml.rels');
+  const targets = {};
+  for (const r of xmlAll(xmlDoc(relsText), 'Relationship')) targets[r.getAttribute('Id')] = r.getAttribute('Target');
+  const sharedText = await zipText(zip_, 'xl/sharedStrings.xml');
+  const shared = sharedText ? xmlAll(xmlDoc(sharedText), 'si').map(si => xmlAll(si, 't').map(t => t.textContent).join('')) : [];
+  const stylesText = await zipText(zip_, 'xl/styles.xml');
+  const dateXf = [];
+  if (stylesText) {
+    const st = xmlDoc(stylesText), custom = {};
+    for (const f of xmlAll(st, 'numFmt')) custom[+f.getAttribute('numFmtId')] = f.getAttribute('formatCode');
+    const xfs = xmlAll(st, 'cellXfs')[0];
+    if (xfs) xmlAll(xfs, 'xf').forEach((x, i) => { dateXf[i] = isDateFormat(+x.getAttribute('numFmtId'), custom); });
+  }
+  const sheets = [];
+  for (const sh of xmlAll(xmlDoc(wbText), 'sheet')) {
+    const ridAttr = [...sh.attributes].find(a => a.localName === 'id');
+    const target = targets[ridAttr?.value] || '';
+    const path = target.startsWith('/') ? target.slice(1) : 'xl/' + target;
+    const text = await zipText(zip_, path);
+    if (!text) continue;
+    const rows = xmlAll(xmlDoc(text), 'row').map(row => {
+      const cells = [];
+      for (const c of xmlAll(row, 'c')) {
+        const ref = c.getAttribute('r'), t = c.getAttribute('t'), raw = xmlAll(c, 'v')[0]?.textContent;
+        let v = '';
+        if (t === 's') v = shared[+raw] ?? '';
+        else if (t === 'inlineStr') v = xmlAll(c, 't').map(x => x.textContent).join('');
+        else if (t === 'str') v = raw ?? '';
+        else if (t === 'b') v = raw === '1';
+        else if (t === 'e' || raw == null || raw === '') v = '';
+        else { const n = Number(raw); v = dateXf[+c.getAttribute('s')] ? serialToISO(n) : n; }
+        cells[ref ? colIndex(ref) : cells.length] = v;
+      }
+      return Array.from(cells, x => x ?? '');
+    });
+    sheets.push({name: sh.getAttribute('name'), rows});
+  }
+  return sheets;
+}
+
+/* ================================================================ admission cycle: rules */
+
+const headKey = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const ADM_COLS = {
+  roll: ['roll no', 'roll number', 'roll', 'rollno'],
+  name: ['name of the scholar', 'name', 'student name', 'scholar name', 'name of the student', 'name of student', 'name of scholar', 'student', 'scholar', 'candidate name'],
+  guide: ['guide', 'guide name', 'name of the guide', 'main guide', 'research guide', 'supervisor', 'guide 1'],
+  gender: ['gender', 'sex'],
+  scheme: ['scheme', 'category of admission'],
+  programme: ['programme', 'program', 'degree'],
+  date_of_joining: ['date of joining', 'doj', 'joining date'],
+  remarks: ['remarks', 'remark'],
+};
+const isCoHead = h => /^co ?(guide|supervisor)\b/.test(h);
+
+function findAdmissionTable(rows){
+  for (let r = 0; r < Math.min(rows.length, 20); r++) {
+    const heads = rows[r].map(headKey), col = {};
+    for (const [k, names] of Object.entries(ADM_COLS)) col[k] = heads.findIndex(h => names.includes(h));
+    if (col.roll >= 0 && col.name >= 0 && col.guide >= 0) {
+      col.co = heads.flatMap((h, i) => isCoHead(h) ? [i] : []);
+      return {headerRow: r, col};
+    }
+  }
+  return null;
+}
+const pickSheet = sheets => Math.max(0, sheets.findIndex(s => findAdmissionTable(s.rows)));
+
+/* Co-guide cells can hold several names: "Dr. A; Dr. B". Commas stay, they separate a name from its institute. */
+const splitCoguides = v => String(v ?? '').split(/\s*[;\n]\s*|\s+&\s+|\s+and\s+|\s*\/\s*/i).map(s => s.trim()).filter(Boolean);
+/* "Dr. BENT WEBER, NTU" and "Dr. DEBDUTTA RAY, (EE)" compare as "BENT WEBER" and "DEBDUTTA RAY". */
+const nameKey = raw => String(raw ?? '').trim().replace(/^(Dr|Prof)\.?\s+/i, '').replace(/\(.*?\)/g, '').replace(/,.*$/, '').replace(/\s+/g, ' ').trim().toUpperCase();
+const nameWords = k => new Set(k.split(' ').filter(w => w.length > 1));
+
+/* exact, or a single likely candidate for a person to confirm (initials ignored, one name inside the other). */
+function matchFaculty(raw){
+  const key = nameKey(raw);
+  const hit = D.faculty.find(f => f.name === key);
+  if (hit) return {id: hit.id, exact: true};
+  const w = nameWords(key);
+  const shared = f => [...nameWords(f.name)].filter(x => w.has(x)).length;
+  let near = D.faculty.filter(f => { const n = shared(f), size = nameWords(f.name).size; return n >= 2 && (n === size || n === w.size); });
+  if (near.length > 1) near = near.filter(f => f.active);
+  return near.length === 1 ? {id: near[0].id, exact: false} : {id: null, exact: false};
+}
+
+/* The upload as it stands, in plain data. `adm` holds the file; `names` holds the choice made for each name. */
+function parseAdmission(sheet){
+  const table = findAdmissionTable(sheet.rows);
+  if (!table) throw new Error(`Could not find the columns Roll No., Name and Guide in sheet "${sheet.name}".`);
+  const {headerRow, col} = table;
+  const text = (r, k) => col[k] >= 0 ? String(r[col[k]] ?? '').trim().replace(/\s+/g, ' ') : '';
+  const rows = [];
+  sheet.rows.slice(headerRow + 1).forEach((r, i) => {
+    const row = {line: headerRow + 2 + i, roll_no: text(r, 'roll').toUpperCase(), name: text(r, 'name').toUpperCase(), guide: text(r, 'guide'),
+      gender: text(r, 'gender').toUpperCase().slice(0, 1), scheme: text(r, 'scheme'), programme: text(r, 'programme'),
+      date_of_joining: text(r, 'date_of_joining'), remarks: text(r, 'remarks'), co: col.co.flatMap(c => splitCoguides(r[c]))};
+    if (row.roll_no || row.name || row.guide) rows.push(row);
+  });
+  return rows;
+}
+
+function rowProblem(row, seen){
+  if (!row.roll_no) return ['bad', 'No roll number'];
+  if (!row.name) return ['bad', 'No name'];
+  if (!row.guide) return ['bad', 'No guide'];
+  if (seen.has(row.roll_no)) return ['dup', 'Repeated in this file'];
+  seen.add(row.roll_no);
+  const on = D.scholars.find(s => s.roll_no === row.roll_no);
+  if (on) return ['dup', `Already on the list (${on.cycle})`];
+  if (D.students.some(s => s.roll_no === row.roll_no)) return ['dup', 'Already in graduated scholars'];
+  return null;
+}
+
+/* Works out every row's status, the names needing a decision and the effect on each guide's load. */
+function evalAdmission(rows, names){
+  const seen = new Set(), notes = {};
+  const out = rows.map(row => {
+    const p = rowProblem(row, seen);
+    return {...row, status: p ? p[0] : 'ok', note: p ? p[1] : ''};
+  });
+  const ready = out.filter(r => r.status === 'ok');
+  const need = new Map();
+  const want = (raw, asGuide) => {
+    const key = nameKey(raw);
+    const m = matchFaculty(raw);
+    if (m.exact) return;
+    const e = need.get(key) || {key, raw, asGuide: false, suggestedId: m.id};
+    e.asGuide ||= asGuide;
+    need.set(key, e);
+  };
+  for (const r of ready) { want(r.guide, true); r.co.forEach(c => want(c, false)); }
+  const choice = raw => {
+    const key = nameKey(raw), m = matchFaculty(raw);
+    if (m.exact) return 'f:' + m.id;
+    const e = need.get(key);
+    const dflt = e.suggestedId ? 'f:' + e.suggestedId : e.asGuide ? '' : 'ext';
+    const c = names[key] ?? dflt;
+    return c === 'ext' && e.asGuide ? '' : c;
+  };
+  const impact = new Map();
+  const bump = (c, field, label) => {
+    const e = impact.get(c) || {choice: c, label, main: 0, co: 0};
+    e[field]++;
+    impact.set(c, e);
+  };
+  for (const r of ready) {
+    r.guideChoice = choice(r.guide);
+    r.coChoices = r.co.map(raw => ({raw, choice: choice(raw)}));
+    const dup = r.coChoices.filter(c => c.choice === r.guideChoice);
+    if (dup.length) { r.coChoices = r.coChoices.filter(c => c.choice !== r.guideChoice); r.note = 'Same person listed as guide and co-guide: co-guide entry ignored'; }
+    if (!r.guideChoice || r.coChoices.some(c => !c.choice)) { r.status = 'wait'; continue; }
+    const f = r.guideChoice.startsWith('f:') ? facById(+r.guideChoice.slice(2)) : null;
+    if (f && !f.active && !r.note) r.note = `${f.name} is marked as former faculty`;
+    bump(r.guideChoice, 'main', f?.name ?? nameKey(r.guide));
+    for (const c of r.coChoices) if (c.choice !== 'ext') bump(c.choice, 'co', c.choice.startsWith('f:') ? facById(+c.choice.slice(2))?.name : nameKey(c.raw));
+  }
+  const count = st => out.filter(r => r.status === st).length;
+  return {rows: out, need: [...need.values()], impact: [...impact.values()], counts: {all: out.length, ok: count('ok'), wait: count('wait'), dup: count('dup'), bad: count('bad')}, notes};
+}
+
+function impactRows(impact){
+  return impact.map(e => {
+    const f = e.choice.startsWith('f:') ? byIdNow(+e.choice.slice(2)) : null;
+    const cap = f ? f.cap : capacityRow(0, 0, 0, 0, 0).cap, before = f ? f.total : 0;
+    const after = before + e.main + 0.5*e.co;
+    return {...e, name: e.label, isNew: !f, cap, before, after, available: cap - after};
+  }).sort((a, b) => a.available - b.available || a.name.localeCompare(b.name));
+}
+const byIdNow = id => compute().faculty.find(f => f.id === id);
+
+/* Adds the checked rows, raises each guide's on-roll count, and saves it all as one change. */
+function commitAdmission(rows, names, cycle, fileName){
+  const label = String(cycle ?? '').trim();
+  if (!label) throw new Error('Give this admission cycle a name, for example Jan 2027');
+  const ev = evalAdmission(rows, names);
+  if (ev.counts.wait) throw new Error(`${ev.counts.wait} row(s) still need a guide or co-guide to be chosen`);
+  if (!ev.counts.ok) throw new Error('There are no new scholars to add from this file');
+  const today = localISO(new Date()), created = {};
+  const facultyFor = (c, raw) => {
+    if (c.startsWith('f:')) return facById(+c.slice(2));
+    const key = nameKey(raw);
+    if (!created[key]) {
+      created[key] = {id: newId(), name: key, active: 1, joined_on: null, n1: 0, roll_main: 0, roll_co: 0, notes: `Added by admission upload: ${label}`, legacy_c5: null, legacy_c3: null, legacy_cap: null};
+      D.faculty.push(created[key]);
+    }
+    return created[key];
+  };
+  for (const r of ev.rows.filter(x => x.status === 'ok')) {
+    const guide = facultyFor(r.guideChoice, r.guide);
+    guide.roll_main = (+guide.roll_main || 0) + 1;
+    const coguides = r.coChoices.map(c => {
+      if (c.choice === 'ext') return {external_name: c.raw};
+      const f = facultyFor(c.choice, c.raw);
+      f.roll_co = (+f.roll_co || 0) + 1;
+      return {faculty_id: f.id};
+    });
+    D.scholars.push({id: newId(), roll_no: r.roll_no, name: r.name, gender: r.gender, scheme: r.scheme, programme: r.programme,
+      guide_id: guide.id, guide_name: '', coguides, date_of_joining: r.date_of_joining, cycle: label, counted: 1, remarks: r.remarks, added_on: today});
+  }
+  const madeNew = Object.keys(created);
+  log('admission upload', `${label}: ${ev.counts.ok} scholars added from ${fileName}` + (madeNew.length ? `; new faculty: ${madeNew.join(', ')}` : ''));
+  persist();
+  return ev.counts.ok;
+}
+
+function releaseScholar(s){
+  if (!s.counted) return;
+  const g = facById(s.guide_id);
+  if (g) g.roll_main = Math.max((+g.roll_main || 0) - 1, 0);
+  for (const c of s.coguides) if (c.faculty_id) { const f = facById(c.faculty_id); if (f) f.roll_co = Math.max((+f.roll_co || 0) - 1, 0); }
+}
+function undoCycle(label){
+  const gone = D.scholars.filter(s => s.cycle === label && s.counted);
+  gone.forEach(releaseScholar);
+  D.scholars = D.scholars.filter(s => !(s.cycle === label && s.counted));
+  log('admission undo', `${label}: ${gone.length} scholars removed and on-roll counts reduced`);
+  persist();
+  return gone.length;
+}
+function removeScholar(id){
+  const s = D.scholars.find(x => x.id === id);
+  if (!s) throw new Error('Scholar not found');
+  releaseScholar(s);
+  D.scholars = D.scholars.filter(x => x.id !== id);
+  log('remove scholar', `${s.roll_no} ${s.name} (${s.cycle})` + (s.counted ? '; on-roll counts reduced' : ''));
+  persist();
+}
+
+/* ================================================================ admission cycle: screen */
+
+let adm = null;   // {fileName, sheets, sheetIdx, rows, names, cycle}
+const defaultCycle = () => new Date().toLocaleDateString('en-GB', {month: 'short', year: 'numeric'});
+
+async function admFile(input){
+  const file = input.files[0]; input.value = '';
+  if (!file) return;
+  $('adm-err').textContent = '';
+  try {
+    const sheets = await readXlsx(await file.arrayBuffer());
+    const sheetIdx = pickSheet(sheets);
+    const rows = parseAdmission(sheets[sheetIdx]);
+    adm = {fileName: file.name, sheets, sheetIdx, rows, names: {}};
+    renderAdm();
+  } catch (e) {
+    adm = null; renderAdm();
+    $('adm-err').textContent = e.message;
+  }
+}
+function admSheet(i){
+  $('adm-err').textContent = '';
+  try { adm.sheetIdx = +i; adm.rows = parseAdmission(adm.sheets[adm.sheetIdx]); adm.names = {}; }
+  catch (e) { adm.rows = []; $('adm-err').textContent = e.message; }
+  renderAdm();
+}
+function admChoose(key, value){ adm.names[key] = value; renderAdm(); }
+function admCancel(){ adm = null; renderAdm(); }
+async function admConfirm(){
+  $('adm-err').textContent = '';
+  try {
+    await refreshIfChanged();
+    const n = commitAdmission(adm.rows, adm.names, $('adm-cycle').value, adm.fileName);
+    adm = null; refresh(); toast(`${n} scholars added. Saving to the Google Sheet…`);
+  } catch (e) { $('adm-err').textContent = e.message; }
+}
+function admUndo(label){
+  const n = D.scholars.filter(s => s.cycle === label && s.counted).length;
+  if (!confirm(`Undo admission cycle "${label}"?\n\nThis removes its ${n} scholars and takes them off their guides' on-roll counts, in the app and in the Google Sheet.`)) return;
+  undoCycle(label); refresh(); toast(`Cycle ${label} undone`);
+}
+function admRemove(id){
+  const s = D.scholars.find(x => x.id === id);
+  if (s && confirm(`Remove ${s.roll_no} ${s.name} from the list?` + (s.counted ? ` Their guide's on-roll count goes down by one.` : ` This scholar was on the list before the app, so on-roll counts stay as they are: correct them on the Faculty tab if needed.`))) { removeScholar(id); refresh(); }
+}
+function admTemplate(){
+  const head = ['S.No.', 'Roll No.', 'Name of the Scholar', 'Gender', 'Scheme', 'Programme', 'Guide', 'Co-Guide', 'Date of Joining', 'Remarks'];
+  download('Admission list template.xlsx', makeXlsx([{name: 'Admissions', rows: [head], widths: [7, 13, 30, 8, 12, 16, 30, 40, 15, 20]}]));
+}
+
+function facultyChoices(sel){
+  return [...D.faculty].sort((a, b) => b.active - a.active || a.name.localeCompare(b.name))
+    .map(f => `<option value="f:${f.id}"${sel === 'f:' + f.id ? ' selected' : ''}>${esc(f.name)}${f.active ? '' : ' (former)'}</option>`).join('');
+}
+
+function renderAdm(){
+  const on = !!adm;
+  $('adm-preview').classList.toggle('hidden', !on);
+  $('adm-pick').classList.toggle('hidden', on);
+  renderCycles(); renderScholars();
+  if (!on) { $('adm-cycle').value = ''; return; }   // the next upload must not inherit the last cycle's name
+  const ev = evalAdmission(adm.rows, adm.names), c = ev.counts;
+  const cycleNow = $('adm-cycle').value;
+  $('adm-file').textContent = adm.fileName;
+  $('adm-sheet-wrap').classList.toggle('hidden', adm.sheets.length < 2);
+  $('adm-sheet').innerHTML = adm.sheets.map((s, i) => `<option value="${i}"${i === adm.sheetIdx ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  if (!cycleNow) $('adm-cycle').value = defaultCycle();
+  $('adm-sum').innerHTML = [['In the file', c.all, ''], ['Will be added', c.ok, 'pos'], ['Need a choice', c.wait, c.wait ? 'zero' : ''], ['Already on a list, skipped', c.dup, ''], ['Incomplete, skipped', c.bad, c.bad ? 'neg' : '']]
+    .map(([l, v]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
+  $('adm-names-card').classList.toggle('hidden', !ev.need.length);
+  $('adm-names').innerHTML = '<thead><tr><th class="nosort">Name in your file</th><th class="nosort">Used as</th><th class="nosort">Treat as</th></tr></thead><tbody>' +
+    ev.need.map(e => {
+      const dflt = e.suggestedId ? 'f:' + e.suggestedId : e.asGuide ? '' : 'ext';
+      let sel = adm.names[e.key] ?? dflt;
+      if (sel === 'ext' && e.asGuide) sel = '';
+      return `<tr><td>${esc(e.raw)}${e.suggestedId && adm.names[e.key] == null ? ' <span class="pill zero">Likely match, please check</span>' : ''}</td><td>${e.asGuide ? 'Guide' : 'Co-guide'}</td>
+      <td><select data-key="${esc(e.key)}" class="adm-choice" aria-label="Treat ${esc(e.raw)} as">
+        ${sel ? '' : '<option value="" selected>Choose…</option>'}
+        ${e.asGuide ? '' : `<option value="ext"${sel === 'ext' ? ' selected' : ''}>External co-guide (recorded, no load counted)</option>`}
+        <option value="new"${sel === 'new' ? ' selected' : ''}>Add as a new faculty member (CAP 5)</option>
+        <optgroup label="Same person as">${facultyChoices(sel)}</optgroup></select></td></tr>`;
+    }).join('') + '</tbody>';
+  const imp = impactRows(ev.impact), over = imp.filter(r => r.available < 0);
+  $('adm-over').classList.toggle('hidden', !over.length);
+  $('adm-over').textContent = over.length ? `Over capacity after this upload: ${over.map(r => `${r.name} (${fmt(r.available)})`).join(', ')}. You can still add them; the Capacity tab will show them in red.` : '';
+  $('adm-impact').innerHTML = '<thead><tr><th class="nosort">Faculty</th><th class="nosort n">CAP</th><th class="nosort n">TOTAL now</th><th class="nosort n">+ as guide</th><th class="nosort n">+ as co-guide</th><th class="nosort n">TOTAL after</th><th class="nosort n">Available slots after</th></tr></thead><tbody>' +
+    (imp.map(r => `<tr><td>${esc(r.name)}${r.isNew ? ' <span class="chip">new</span>' : ''}</td><td class="n">${r.cap}</td><td class="n">${fmt(r.before)}</td><td class="n">${r.main}</td><td class="n">${r.co}</td><td class="n"><b>${fmt(r.after)}</b></td><td class="n">${slot(r.available)}</td></tr>`).join('')
+      || '<tr><td colspan="7" class="empty">Nothing to show yet.</td></tr>') + '</tbody>';
+  const badge = {ok: ['pos', 'Add'], wait: ['zero', 'Needs a choice'], dup: ['zero', 'Skip'], bad: ['neg', 'Skip']};
+  $('adm-rows').innerHTML = '<thead><tr><th class="nosort">Excel row</th><th class="nosort">Roll No.</th><th class="nosort">Name of the scholar</th><th class="nosort">Guide</th><th class="nosort">Co-guide(s)</th><th class="nosort">Result</th></tr></thead><tbody>' +
+    ev.rows.map(r => `<tr><td class="muted">${r.line}</td><td>${esc(r.roll_no)}</td><td>${esc(r.name)}</td><td>${esc(r.guide)}</td><td>${r.co.map(esc).join('<br>')}</td>
+      <td><span class="pill ${badge[r.status][0]}">${badge[r.status][1]}</span> ${esc(r.note)}</td></tr>`).join('') + '</tbody>';
+  const btn = $('adm-go');
+  btn.disabled = !c.ok || !!c.wait;
+  btn.textContent = c.ok ? `Add ${c.ok} scholars and update the Google Sheet` : 'Nothing to add';
+}
+$('adm-names').addEventListener('change', e => { if (e.target.matches('.adm-choice')) admChoose(e.target.dataset.key, e.target.value); });
+
+function scholarGuide(s){ return facById(s.guide_id)?.name ?? s.guide_name ?? ''; }
+function scholarCos(s){ return s.coguides.map(c => c.faculty_id ? facById(c.faculty_id)?.name ?? '' : c.external_name); }
+
+function renderCycles(){
+  const groups = new Map();
+  for (const s of D.scholars) {
+    const g = groups.get(s.cycle) || {cycle: s.cycle, n: 0, counted: 0, added: s.added_on};
+    g.n++; if (s.counted) g.counted++;
+    groups.set(s.cycle, g);
+  }
+  const list = [...groups.values()].sort((a, b) => String(b.added).localeCompare(String(a.added)));
+  $('t-cyc').innerHTML = '<thead><tr><th class="nosort">Admission cycle</th><th class="nosort">Uploaded on</th><th class="nosort n">Scholars</th><th class="nosort"></th></tr></thead><tbody>' +
+    (list.map(g => `<tr><td>${esc(g.cycle)}</td><td>${g.added ? dmy(g.added) : '<span class="muted">Already counted in on-roll numbers</span>'}</td><td class="n">${g.n}</td>
+      <td>${g.counted ? `<button class="link danger adm-undo" data-cycle="${esc(g.cycle)}">Undo this cycle</button>` : ''}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="empty">No admission lists uploaded yet.</td></tr>') + '</tbody>';
+  const f = $('f-sch'), cur = f.value;
+  f.innerHTML = '<option value="">All cycles</option>' + list.map(g => `<option value="${esc(g.cycle)}">${esc(g.cycle)}</option>`).join('');
+  f.value = list.some(g => g.cycle === cur) ? cur : '';
+}
+$('t-cyc').addEventListener('click', e => { const b = e.target.closest('.adm-undo'); if (b) admUndo(b.dataset.cycle); });
+
+function renderScholars(){
+  const q = $('q-sch').value.trim().toUpperCase(), cyc = $('f-sch').value;
+  let rows = D.scholars;
+  if (cyc) rows = rows.filter(s => s.cycle === cyc);
+  if (q) rows = rows.filter(s => [s.roll_no, s.name, scholarGuide(s), ...scholarCos(s)].join(' ').toUpperCase().includes(q));
+  rows = [...rows].sort((a, b) => a.roll_no.localeCompare(b.roll_no));
+  $('sch-count').textContent = `${rows.length} of ${D.scholars.length} scholars`;
+  $('t-sch').innerHTML = '<thead><tr><th class="nosort">#</th><th class="nosort">Roll No.</th><th class="nosort">Name of the scholar</th><th class="nosort">Gender</th><th class="nosort">Scheme</th><th class="nosort">Programme</th><th class="nosort">Guide</th><th class="nosort">Co-guide(s)</th><th class="nosort">Joined</th><th class="nosort">Cycle</th><th class="nosort"></th></tr></thead><tbody>' +
+    (rows.map((s, i) => `<tr><td class="muted">${i+1}</td><td>${esc(s.roll_no)}</td><td>${esc(s.name)}</td><td>${esc(s.gender)}</td><td>${esc(s.scheme)}</td><td>${esc(s.programme)}</td>
+      <td>${esc(scholarGuide(s))}</td><td>${scholarCos(s).map(esc).join('<br>')}</td><td style="white-space:nowrap">${esc(/^\d{4}-\d{2}-\d{2}$/.test(s.date_of_joining) ? dmy(s.date_of_joining) : s.date_of_joining)}</td><td>${esc(s.cycle)}</td>
+      <td><button class="link" onclick="admRemove(${+s.id})">Remove</button></td></tr>`).join('')
+      || '<tr><td colspan="11" class="empty">No scholars match.</td></tr>') + '</tbody>';
+}
+['q-sch', 'f-sch'].forEach(i => $(i).addEventListener('input', renderScholars));
+
+window.addEventListener('beforeunload', e => { if (saving || syncError) e.preventDefault(); });
+let lastCheck = 0;
+window.addEventListener('focus', () => {
+  if (!conn || document.body.classList.contains('locked') || saving || syncError || document.querySelector('dialog[open]') || Date.now() - lastCheck < 15000) return;
+  lastCheck = Date.now();
+  refreshIfChanged().then(changed => { if (changed) toast('Updated from the Google Sheet'); }).catch(() => {});
+});
+
+refresh();
+(async () => {
+  const c = savedConn();
+  if (!c?.url || !c?.pass) return;
+  $('c-url').value = c.url;
+  try { await connect(c.url, c.pass, true); }
+  catch (e) { $('c-err').textContent = e.message; if (e.auth) forgetConn(); }
+})();
+</script></body></html>

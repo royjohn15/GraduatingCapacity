@@ -1,0 +1,10 @@
+# The GitHub repo is public: nothing with student data may be committed.
+*.xlsx
+*.xls
+*.csv
+*.json
+private/
+GraduatingCapacity.html
+# tests need the private files above and name real faculty
+tools/test_*.py
+__pycache__/
