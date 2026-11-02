@@ -350,6 +350,39 @@ button:disabled{opacity:.55;cursor:default}
   </form>
 </dialog>
 
+<dialog id="dlg-sch">
+  <form method="dialog" onsubmit="return false">
+    <div class="dlg-h"><span>Add scholar on roll</span><button type="button" class="link" onclick="close_('dlg-sch')">✕</button></div>
+    <div class="dlg-b">
+      <div class="grid">
+        <label>Roll No.<input id="sch-roll" required placeholder="PH27D001"></label>
+        <label>Gender<select id="sch-gender"><option value="">—</option><option>M</option><option>F</option><option>O</option></select></label>
+        <label class="full">Name of the scholar<input id="sch-name" required></label>
+        <label class="full">Guide<select id="sch-guide"></select></label>
+        <div class="full">
+          <label>Co-guide(s) from the department — pick one at a time
+            <select id="sch-co-pick" onchange="addSchCo()"></select>
+          </label>
+          <div class="chips" id="sch-co" style="margin-top:6px"></div>
+        </div>
+        <label class="full">External co-guide(s) — separate with “;”<input id="sch-ext" placeholder="Dr. NAME, (MM); Dr. NAME, (IIT Palakkad)"></label>
+        <label>Scheme<input id="sch-scheme" placeholder="HTRA"></label>
+        <label>Programme<input id="sch-prog" placeholder="Regular PhD"></label>
+        <label>Date of joining<input id="sch-doj" type="date"></label>
+        <label>Admission cycle<input id="sch-cycle" list="sch-cycles"><datalist id="sch-cycles"></datalist></label>
+        <label class="full">Remarks<input id="sch-rem"></label>
+        <label class="inline full"><input type="checkbox" id="sch-counted" checked>
+          Also add this scholar to the on-roll numbers used for capacity (untick if the numbers already include them)</label>
+      </div>
+      <div class="err" id="sch-err" role="alert"></div>
+    </div>
+    <div class="dlg-f">
+      <button type="button" onclick="close_('dlg-sch')">Cancel</button>
+      <button type="button" class="primary" onclick="saveScholarUI()">Save</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlg-det" style="width:min(820px,96vw)">
   <div class="dlg-h"><span id="det-title"></span><button type="button" class="link" onclick="close_('dlg-det')">✕</button></div>
   <div class="dlg-b" id="det-body"></div>
@@ -981,13 +1014,63 @@ function showDetail(id){
       <div class="tot"><span>Available slots = CAP − TOTAL</span><span>${slot(f.available)}</span></div>
     </div>
     ${f.joined_on ? `<p class="muted">Joined ${dmy(f.joined_on)}.</p>` : ''}${f.notes ? `<p class="muted">${esc(f.notes)}</p>` : ''}
+    ${onRollSection(f)}
+    <h3 style="margin-top:18px">Graduated scholars</h3>
     <table><thead><tr><th class="nosort">Roll No.</th><th class="nosort">Scholar</th><th class="nosort">Year</th><th class="nosort">Role</th><th class="nosort n">Credit</th><th class="nosort">5 yr</th><th class="nosort">3 yr</th><th class="nosort"></th></tr></thead><tbody>
     ${cr.map(c => `<tr><td>${esc(c.roll_no)}</td><td>${esc(c.student)}</td><td>${c.ay}</td><td>${c.role}</td><td class="n">${fmt(c.credit)}</td>
       <td>${c.in5 ? '✓' : '<span class="muted">–</span>'}</td><td>${c.in3 ? '✓' : '<span class="muted">–</span>'}</td>
       <td><button class="link" onclick="close_('dlg-det');openStudent(${c.student_id})">Edit</button></td></tr>`).join('')
       || '<tr><td colspan="8" class="empty">No graduated scholars on record.</td></tr>'}
     </tbody></table>`;
-  $('dlg-det').showModal();
+  if (!$('dlg-det').open) $('dlg-det').showModal();
+}
+/* The list of named scholars and the on-roll numbers are kept separately, so say so when they disagree. */
+function onRollSection(f){
+  const mine = D.scholars.filter(s => s.guide_id === f.id || s.coguides.some(c => c.faculty_id === f.id))
+    .map(s => ({...s, role: s.guide_id === f.id ? 'Guide' : 'Co-guide'}))
+    .sort((a, b) => a.role.localeCompare(b.role) * -1 || a.roll_no.localeCompare(b.roll_no));
+  const asGuide = mine.filter(s => s.role === 'Guide').length, asCo = mine.length - asGuide;
+  const differ = asGuide !== +f.roll_main || asCo !== +f.roll_co;
+  return `<div class="bar" style="justify-content:space-between;margin:18px 0 8px">
+      <h3 style="margin:0">Scholars currently on roll (${asGuide} as guide, ${asCo} as co-guide)</h3>
+      <button class="primary" onclick="openScholar(${f.id})">+ Add scholar on roll</button>
+    </div>
+    ${differ ? `<div class="note" id="det-differ">The on-roll numbers used for capacity are <b>${fmt(f.roll_main)} as guide, ${fmt(f.roll_co)} as co-guide</b>, which differs from this list. Capacity uses those numbers, not this list. To change them, use Edit faculty details.</div>` : ''}
+    <table id="det-roll"><thead><tr><th class="nosort">Roll No.</th><th class="nosort">Scholar</th><th class="nosort">Role</th><th class="nosort">Other guide(s)</th><th class="nosort">Programme</th><th class="nosort">Joined</th><th class="nosort">Cycle</th><th class="nosort"></th></tr></thead><tbody>
+    ${mine.map(s => `<tr><td>${esc(s.roll_no)}</td><td>${esc(s.name)}</td><td>${s.role}</td>
+      <td>${[s.guide_id === f.id ? '' : scholarGuide(s), ...s.coguides.filter(c => c.faculty_id !== f.id).map(c => c.faculty_id ? facById(c.faculty_id)?.name ?? '' : c.external_name)].filter(Boolean).map(esc).join('<br>')}</td>
+      <td>${esc(s.programme)}</td><td style="white-space:nowrap">${esc(/^\d{4}-\d{2}-\d{2}$/.test(s.date_of_joining) ? dmy(s.date_of_joining) : s.date_of_joining)}</td><td>${esc(s.cycle)}</td>
+      <td><button class="link" onclick="detRemove(${+s.id})">Remove</button></td></tr>`).join('')
+      || '<tr><td colspan="8" class="empty">No scholars on the list for this faculty member.</td></tr>'}
+    </tbody></table>`;
+}
+function detRemove(id){ admRemove(id); if (byId[detailId]) showDetail(detailId); }
+
+let schCo = [];
+function openScholar(guideId){
+  facultyOptions($('sch-guide')); facultyOptions($('sch-co-pick'));
+  $('sch-guide').value = guideId || '';
+  ['sch-roll', 'sch-name', 'sch-ext', 'sch-scheme', 'sch-prog', 'sch-doj', 'sch-rem'].forEach(i => { $(i).value = ''; });
+  $('sch-gender').value = ''; $('sch-counted').checked = true; $('sch-err').textContent = '';
+  $('sch-cycle').value = defaultCycle();
+  $('sch-cycles').innerHTML = [...new Set(D.scholars.map(s => s.cycle))].map(c => `<option value="${esc(c)}"></option>`).join('');
+  schCo = []; renderSchCo();
+  $('dlg-sch').showModal(); $('sch-roll').focus();
+}
+function addSchCo(){ const v = +$('sch-co-pick').value; if (v && !schCo.includes(v)) schCo.push(v); $('sch-co-pick').value = ''; renderSchCo(); }
+function rmSchCo(v){ schCo = schCo.filter(x => x !== v); renderSchCo(); }
+function renderSchCo(){
+  $('sch-co').innerHTML = schCo.map(v => `<span class="chip">${esc(byId[v].name)}<button type="button" onclick="rmSchCo(${v})">✕</button></span>`).join('') || '<span class="muted">None</span>';
+}
+function saveScholarUI(){
+  try {
+    addScholar({roll_no: $('sch-roll').value, name: $('sch-name').value, gender: $('sch-gender').value, guide_id: $('sch-guide').value, coguide_ids: schCo,
+      external_coguides: $('sch-ext').value, scheme: $('sch-scheme').value, programme: $('sch-prog').value, date_of_joining: $('sch-doj').value,
+      cycle: $('sch-cycle').value, remarks: $('sch-rem').value, counted: $('sch-counted').checked});
+    close_('dlg-sch'); refresh();
+    if ($('dlg-det').open) showDetail(detailId);
+    toast('Scholar added. Saving to the Google Sheet…');
+  } catch (e) { $('sch-err').textContent = e.message; }
 }
 function editFromDetail(){ close_('dlg-det'); openFaculty(detailId); }
 
@@ -1417,6 +1500,36 @@ function commitAdmission(rows, names, cycle, fileName){
   log('admission upload', `${label}: ${ev.counts.ok} scholars added from ${fileName}` + (madeNew.length ? `; new faculty: ${madeNew.join(', ')}` : ''));
   persist();
   return ev.counts.ok;
+}
+
+function addScholar(data){
+  const roll = String(data.roll_no ?? '').trim().toUpperCase();
+  const name = String(data.name ?? '').trim().replace(/\s+/g, ' ').toUpperCase();
+  const cycle = String(data.cycle ?? '').trim();
+  if (!roll || !name) throw new Error('Roll number and name are required');
+  const guide = facById(Number(data.guide_id));
+  if (!guide) throw new Error('Choose a guide');
+  if (!cycle) throw new Error('Give the admission cycle, for example Jan 2027');
+  const coIds = (data.coguide_ids || []).map(Number);
+  if (coIds.includes(guide.id)) throw new Error('The guide cannot also be a co-guide');
+  const on = D.scholars.find(s => s.roll_no === roll);
+  if (on) throw new Error(`${roll} is already on the list (${on.name}, ${on.cycle})`);
+  const grad = D.students.find(s => s.roll_no === roll);
+  if (grad) throw new Error(`${roll} is already in graduated scholars (${grad.name})`);
+  const ext = String(data.external_coguides ?? '').split(/[;\n]/).map(s => s.trim()).filter(Boolean);
+  const counted = data.counted ? 1 : 0;
+  if (counted) {
+    guide.roll_main = (+guide.roll_main || 0) + 1;
+    for (const id of coIds) { const f = facById(id); f.roll_co = (+f.roll_co || 0) + 1; }
+  }
+  const clean = k => String(data[k] ?? '').trim();
+  const id = newId();
+  D.scholars.push({id, roll_no: roll, name, gender: clean('gender'), scheme: clean('scheme'), programme: clean('programme'),
+    guide_id: guide.id, guide_name: '', coguides: [...coIds.map(faculty_id => ({faculty_id})), ...ext.map(external_name => ({external_name}))],
+    date_of_joining: clean('date_of_joining'), cycle, counted, remarks: clean('remarks'), added_on: counted ? localISO(new Date()) : ''});
+  log('add scholar', `${roll} ${name}, guide ${guide.name}, ${cycle}` + (counted ? '; on-roll counts raised' : '; on-roll counts unchanged'));
+  persist();
+  return id;
 }
 
 function releaseScholar(s){
