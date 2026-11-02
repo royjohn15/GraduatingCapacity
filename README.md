@@ -32,7 +32,7 @@ It contains student data and is kept out of Git.
    - Who has access: **Anyone**
 5. Click **Deploy** and allow access. If Google says the app isn't verified, choose
    **Advanced > Go to (project name)**: it is your own script.
-6. Copy the **Web app URL**, which ends in `/exec`.
+6. Copy the **Web app URL**, which ends in `/exec`, and put it in `config.js`.
 
 "Anyone" means the script can be reached without a Google login. It still refuses every request without the
 passcode, and the Sheet itself stays private to you.
@@ -58,12 +58,12 @@ The app appears at `https://YOUR-USERNAME.github.io/YOUR-REPO/` after a minute o
 
 ### 4. Connect and import
 
-1. Open the app and enter the `/exec` link and the passcode.
+1. Open the app and enter the passcode. The `/exec` link comes from `config.js`, so it is never typed in.
 2. It opens at **Settings & backup** and says the Sheet is empty. Click **Load data file** and choose
    `private/initial_data.json`.
 3. Check the **Capacity** tab, then open the Sheet: the tabs below will be filled.
 
-To give a colleague access, send them the app link, the `/exec` link and the passcode.
+To give a colleague access, send them the app link and the passcode.
 
 ## Each admission cycle
 
@@ -106,11 +106,12 @@ nobody's roll counts are silently overwritten.
 ## Changing the script or passcode
 
 Edit in Apps Script, then **Deploy > Manage deployments > pencil icon > Version: New version > Deploy**. The link stays
-the same. Without this step the old version keeps running. After changing the passcode, everyone reconnects.
+the same. Without this step the old version keeps running. After changing the passcode, everyone reconnects. A **New deployment**
+instead creates a different link: put that in `config.js` and push it.
 
 ## Security
 
-- The passcode is the only lock on the data, so make it long and share it only with people who should have access.
+- The script link in `config.js` is public, so the passcode is the only lock on the data. Make it long and share it only with people who should have access.
 - **Remember on this computer** stores the passcode in that browser. Untick it on shared computers. Other pages you host
   on the same `username.github.io` address could read it, so a separate GitHub account is safer if you host other sites there.
 - Backups (`.json`) contain student details. Keep them private.

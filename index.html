@@ -121,9 +121,9 @@ button:disabled{opacity:.55;cursor:default}
 <div id="connect" class="noprint">
   <div class="card pad">
     <h1>Graduating Capacity</h1>
-    <p class="muted">This page holds no data of its own. It works on your department's Google Sheet, so it needs the link and passcode set up for that Sheet.</p>
+    <p class="muted">This page holds no data of its own. It works on your department's Google Sheet. Enter the passcode to open it.</p>
     <form onsubmit="connectUI(); return false" class="grid" style="grid-template-columns:1fr">
-      <label>Link to the Sheet's script (ends in /exec)<input id="c-url" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec"></label>
+      <label id="c-url-wrap">Link to the Sheet's script (ends in /exec)<input id="c-url" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec"></label>
       <label>Passcode<input id="c-pass" type="password" autocomplete="off"></label>
       <label class="inline"><input type="checkbox" id="c-remember" checked> Remember on this computer (do not tick on a shared computer)</label>
       <div class="err" id="c-err" role="alert"></div>
@@ -360,6 +360,7 @@ button:disabled{opacity:.55;cursor:default}
 
 
 
+<script src="config.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -603,7 +604,7 @@ async function connectUI(){
   $('c-go').disabled = false; $('c-go').textContent = 'Connect';
 }
 function disconnect(){
-  if (!confirm('Disconnect this browser from the Google Sheet? You will need the link and passcode to connect again.')) return;
+  if (!confirm('Disconnect this browser from the Google Sheet? You will need the passcode to connect again.')) return;
   forgetConn(); location.reload();
 }
 
@@ -1585,10 +1586,11 @@ window.addEventListener('focus', () => {
 
 refresh();
 (async () => {
-  const c = savedConn();
-  if (!c?.url || !c?.pass) return;
-  $('c-url').value = c.url;
-  try { await connect(c.url, c.pass, true); }
+  const c = savedConn(), url = window.SCRIPT_URL || c?.url || '';
+  $('c-url').value = url;
+  $('c-url-wrap').classList.toggle('hidden', !!window.SCRIPT_URL);   // config.js supplies the link
+  if (!url || !c?.pass) return;
+  try { await connect(url, c.pass, true); }
   catch (e) { $('c-err').textContent = e.message; if (e.auth) forgetConn(); }
 })();
 </script></body></html>
