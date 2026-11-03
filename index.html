@@ -282,8 +282,8 @@ button:disabled{opacity:.55;cursor:default}
         <label class="full">Reference date — leave blank to always use today's date
           <input type="date" id="s-ref"></label>
       </div>
-      <p class="muted">Academic year runs July–June. "Last 5 years" means the 5 completed academic years before the
-        reference date's academic year; "last 3 years" means the 3 completed ones. Use a past date to reproduce an older report.</p>
+      <p class="muted">Academic year runs July–June. "Last 5 years" means the reference date's academic year and the 4 before it;
+        "last 3 years" means that academic year and the 2 before it. Use a past date to reproduce an older report.</p>
       <p class="muted">Credit rules: sole guide 1; with any co-guide, the guide gets 0.5 and every department co-guide gets 0.5
         (external co-guides are recorded but not credited). TOTAL on roll follows the same rule, using the current scholars list. GC = MAX(1, GC_5, GC_3), with values below 1 rounded up to 1. CAP = ROUND(5×GC − N1).</p>
       <div class="err" id="s-err"></div>
@@ -407,10 +407,11 @@ function capacityRow(c5, c3, n1, rollMain, rollCo, total){
 }
 
 const ayLabel = y => `${y}-${y+1}`;
-/* Academic year runs July–June: 22-10-2026 is in AY 2026-2027. */
+/* Academic year runs July–June: 22-10-2026 is in AY 2026-2027. Both windows end with the current AY:
+   on that date, last 5 years = 2022-2023 to 2026-2027, last 3 years = 2024-2025 to 2026-2027. */
 function windows(ref){
   const cur = ref.getMonth() >= 6 ? ref.getFullYear() : ref.getFullYear() - 1;
-  const span = n => Array.from({length:n}, (_, i) => cur - n + i);
+  const span = n => Array.from({length:n}, (_, i) => cur - n + 1 + i);
   return {current: cur, y5: span(5), y3: span(3)};
 }
 
@@ -974,9 +975,9 @@ function renderKpis(){
 const CAP_COLS = [
   ['sno','S. No.',1,'Serial number. Faculty are listed by C, then E, then name.'],
   ['name','Guide',0,'Faculty member (active faculty only). Click a row to see the scholars behind the numbers.'],
-  ['c5','Graduated last 5 yrs (C)',1,'Credit for scholars who graduated in the last 5 completed academic years (July–June; the current year is not counted). Sole guide gets 1 per scholar; if the scholar had any co-guide, the guide gets 0.5 and each department co-guide gets 0.5.'],
+  ['c5','Graduated last 5 yrs (C)',1,'Credit for scholars who graduated in the last 5 academic years (July–June), counting the current year and the 4 before it. Sole guide gets 1 per scholar; if the scholar had any co-guide, the guide gets 0.5 and each department co-guide gets 0.5.'],
   ['gc5','GC_5',1,'C ÷ 5 — graduates per year, averaged over 5 years.'],
-  ['c3','Graduated last 3 yrs (E)',1,'The same credit as C, counted over the last 3 completed academic years.'],
+  ['c3','Graduated last 3 yrs (E)',1,'The same credit as C, counted over the last 3 academic years: the current year and the 2 before it.'],
   ['gc3','GC_3',1,'E ÷ 3 — graduates per year, averaged over 3 years.'],
   ['gc5_adj','GC_5 adj.',1,'GC_5, with any value between 0 and 1 rounded up to 1.'],
   ['gc3_adj','GC_3 adj.',1,'GC_3, with any value between 0 and 1 rounded up to 1.'],
@@ -1147,7 +1148,7 @@ function facultyOptions(sel){
 function ayOptions(){
   const cur = +S.windows.current.slice(0, 4), ys = [];
   for (let y = cur; y >= 2010; y--) ys.push(ayLabel(y));
-  return ys.map(y => `<option value="${y}">${y}${S.windows.y5.includes(y) ? '' : y === S.windows.current ? ' (current — counts from next AY)' : ' (outside window)'}</option>`).join('');
+  return ys.map(y => `<option value="${y}">${y}${S.windows.y5.includes(y) ? '' : ' (outside window)'}</option>`).join('');
 }
 function openStudent(id){
   editingStudent = id ?? null;
