@@ -217,7 +217,7 @@ function append_(name, rows) {
 
 /**
  * Applies one batch of changes from the app. A write based on an out-of-date copy is refused,
- * so two people cannot silently overwrite each other's roll counts.
+ * so two people cannot silently overwrite each other's changes.
  * A report-only write (just the Capacity tab) neither checks nor changes the revision.
  */
 function save_(req) {

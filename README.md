@@ -78,10 +78,11 @@ To give a colleague access, send them the app link and the passcode.
    - **Students in the file**: roll numbers already on the list, already graduated or repeated are skipped.
 4. Name the cycle and click **Add ... scholars and update the Google Sheet**.
 
-Each added scholar raises the guide's on-roll count by 1 and each department co-guide's by 1, which counts as 0.5
-in TOTAL. CAP itself depends on graduates and N1, so an admission changes TOTAL and Available slots, not CAP.
+TOTAL on roll comes from the current scholars list. A sole guide gets 1 per scholar. If the scholar has any co-guide,
+internal or external, the guide gets 0.5 and each department co-guide gets 0.5. External co-guides get nothing.
+CAP itself depends on graduates and N1, so an admission changes TOTAL and Available slots, not CAP.
 
-**Wrong file?** Use **Undo this cycle** in the Admission cycles table. It removes those scholars and reverses their counts.
+**Wrong file?** Use **Undo this cycle** in the Admission cycles table. It removes those scholars, and their load goes with them.
 Any new faculty member it created stays, with 0 on roll.
 
 When a scholar graduates, add them with **+ Graduated scholar** as usual. They leave the current list automatically.
@@ -90,9 +91,9 @@ When a scholar graduates, add them with **+ Graduated scholar** as usual. They l
 
 | Tab | Holds | Edit by hand? |
 | --- | --- | --- |
-| Faculty | names, active, N1, on-roll counts | Yes |
+| Faculty | names, active, N1, on-roll counts | Yes, except the two On Roll columns, which the app rewrites from the Scholars tab |
 | Graduated | graduated scholars, guides by name | Yes |
-| Scholars | current scholars, with their admission cycle | Yes |
+| Scholars | current scholars, with their admission cycle; this list decides TOTAL on roll | Yes |
 | Settings | department name, reference date, revision | Department name and reference date only |
 | Capacity | the report table | No, the app rewrites it |
 | Log | activity log | No |
@@ -101,7 +102,7 @@ Hand edits appear in the app when it is reopened or when you return to its brows
 and don't change the **ID** column. Leave ID blank on a new row and one is assigned.
 
 If two people change data at the same moment, the second one is told, gets the latest data and repeats their change, so
-nobody's roll counts are silently overwritten.
+nobody's changes are silently overwritten.
 
 ## Changing the script or passcode
 

@@ -2,9 +2,8 @@
 """Prepares private/initial_data.json, the one-time import that fills a new Google Sheet.
 
 Takes faculty, graduated scholars, settings and activity log as stored in GraduatingCapacity.html,
-and the current scholars from 'PhD Scholars List.xlsx' (sheet CURRENT). Those scholars are recorded
-with Counted = No: the on-roll numbers in the faculty records already include them, so they are only
-there to catch duplicates when an admission list is uploaded.
+and the current scholars from 'PhD Scholars List.xlsx' (sheet CURRENT). The app works out each faculty
+member's on-roll numbers from that list.
 
 The output contains student data. It stays in private/, which .gitignore keeps out of the public repo.
 
@@ -36,6 +35,9 @@ def tokens(name):
 def main():
     html = (ROOT / "GraduatingCapacity.html").read_text()
     data = json.loads(re.search(r'<script id="seed"[^>]*>(.*?)</script>', html, re.S).group(1))
+    for f in data["faculty"]:
+        if f["name"] == "RAHUL KUMAR BARMAN":   # the old app's spelling; the correct name is RAHOOL
+            f["name"] = "RAHOOL KUMAR BARMAN"
     exact = {f["name"]: f["id"] for f in data["faculty"]}
     by_tokens = {tokens(f["name"]): f["id"] for f in data["faculty"]}
 
@@ -81,7 +83,6 @@ def main():
             "coguides": coguides,
             "date_of_joining": joined.strftime("%Y-%m-%d") if isinstance(joined, datetime) else str(joined or ""),
             "cycle": "Before this app",
-            "counted": 0,
             "remarks": str(row[col["Remarks"]] or "").strip(),
             "added_on": "",
         })
