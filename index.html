@@ -135,7 +135,7 @@ button:disabled{opacity:.55;cursor:default}
   <div class="top">
     <div>
       <h1 id="dept">Graduating Capacity</h1>
-      <div class="sub">Graduating capacity as on <b id="asof"></b> · current AY <span id="curay"></span><br>
+      <div class="sub">Graduating capacity as on <b id="asof"></b> · current semester <span id="curay"></span><br>
         Last 5 years: <span id="w5"></span><br>Last 3 years: <span id="w3"></span></div>
     </div>
     <div class="actions">
@@ -282,8 +282,9 @@ button:disabled{opacity:.55;cursor:default}
         <label class="full">Reference date — leave blank to always use today's date
           <input type="date" id="s-ref"></label>
       </div>
-      <p class="muted">Academic year runs July–June. "Last 5 years" means the reference date's academic year and the 4 before it;
-        "last 3 years" means that academic year and the 2 before it. Use a past date to reproduce an older report.</p>
+      <p class="muted">There are two semesters a year: Jan–Jun (even) and Jul–Dec (odd). "Last 5 years" means the reference date's semester and the 9 before it;
+        "last 3 years" means that semester and the 5 before it. A graduate with no semester recorded is taken as Jan–Jun of their academic year
+        (or the current semester, if that is later). Use a past date to reproduce an older report.</p>
       <p class="muted">Credit rules: sole guide 1; with any co-guide, the guide gets 0.5 and every department co-guide gets 0.5
         (external co-guides are recorded but not credited). TOTAL on roll follows the same rule, using the current scholars list. GC = MAX(1, GC_5, GC_3), with values below 1 rounded up to 1. CAP = ROUND(5×GC − N1).</p>
       <div class="err" id="s-err"></div>
@@ -302,6 +303,7 @@ button:disabled{opacity:.55;cursor:default}
         <label class="full">Name of the scholar<input id="st-name" required=""></label>
         <label>Guide<select id="st-guide"></select></label>
         <label>Year of graduation<select id="st-ay"></select></label>
+        <label>Semester of graduation<select id="st-sem"></select></label>
         <div class="full">
           <label>Co-guide(s) from the department — pick one at a time
             <select id="st-co-pick" onchange="addCo()"></select>
@@ -407,12 +409,21 @@ function capacityRow(c5, c3, n1, rollMain, rollCo, total){
 }
 
 const ayLabel = y => `${y}-${y+1}`;
-/* Academic year runs July–June: 22-10-2026 is in AY 2026-2027. Both windows end with the current AY:
-   on that date, last 5 years = 2022-2023 to 2026-2027, last 3 years = 2024-2025 to 2026-2027. */
+/* IITM has two semesters a year: Jan–Jun (even) and Jul–Dec (odd). A semester is numbered 2×year (Jan–Jun) or
+   2×year + 1 (Jul–Dec). "Last 5 years" is the current semester and the 9 before it; "last 3 years" is the current
+   semester and the 5 before it. On 22-10-2026 (Jul–Dec 2026): last 5 years = Jan–Jun 2022 to Jul–Dec 2026,
+   last 3 years = Jan–Jun 2024 to Jul–Dec 2026. Academic year y-(y+1) = Jul–Dec y (odd) + Jan–Jun y+1 (even). */
+const SEM_NAME = {odd: 'Jul–Dec', even: 'Jan–Jun'};
+const semOf = d => 2*d.getFullYear() + (d.getMonth() >= 6 ? 1 : 0);
+const semLabel = i => `${i % 2 ? 'Jul–Dec' : 'Jan–Jun'} ${Math.floor(i/2)}`;
+const semOfAy = (ay, half) => half === 'odd' ? 2*ay + 1 : 2*ay + 2;
+const parseSem = v => /^\s*(jul|odd)/i.test(String(v ?? '')) ? 'odd' : /^\s*(jan|even)/i.test(String(v ?? '')) ? 'even' : '';
+/* A record with no semester is taken as Jan–Jun (the end of its academic year), but never later than the current semester. */
+const gradSem = (s, cur) => s.grad_sem ? semOfAy(s.grad_year, s.grad_sem) : Math.min(semOfAy(s.grad_year, 'even'), cur);
 function windows(ref){
-  const cur = ref.getMonth() >= 6 ? ref.getFullYear() : ref.getFullYear() - 1;
+  const cur = semOf(ref);
   const span = n => Array.from({length:n}, (_, i) => cur - n + 1 + i);
-  return {current: cur, y5: span(5), y3: span(3)};
+  return {current: cur, ay: Math.floor((cur - 1) / 2), y5: span(10), y3: span(6)};
 }
 
 /* Sole guide: 1. With any co-guide (internal or external): guide 0.5, each department co-guide 0.5. */
@@ -482,7 +493,8 @@ const TABS = {
     'On Roll (Main Guide)': f.roll_main ?? 0, 'On Roll (Co-Guide)': f.roll_co ?? 0, Notes: f.notes ?? '',
     'Old Sheet C': f.legacy_c5 ?? '', 'Old Sheet E': f.legacy_c3 ?? '', 'Old Sheet CAP': f.legacy_cap ?? ''})},
   Graduated: {list: () => D.students, row: s => ({ID: s.id, 'Roll No.': s.roll_no, 'Name of the Scholar': s.name, Gender: s.gender ?? '', Guide: guideCell(s),
-    'Co-Guide (Department)': deptCos(s), 'Co-Guide (External)': extCos(s), 'Year of Graduation': ayLabel(s.grad_year), Remarks: s.remarks ?? ''})},
+    'Co-Guide (Department)': deptCos(s), 'Co-Guide (External)': extCos(s), 'Year of Graduation': ayLabel(s.grad_year),
+    'Semester of Graduation': s.grad_sem ? SEM_NAME[s.grad_sem].replace('–', '-') : '', Remarks: s.remarks ?? ''})},
   Scholars: {list: () => D.scholars, row: s => ({ID: s.id, 'Roll No.': s.roll_no, 'Name of the Scholar': s.name, Gender: s.gender ?? '', Scheme: s.scheme ?? '', Programme: s.programme ?? '', Guide: guideCell(s),
     'Co-Guide (Department)': deptCos(s), 'Co-Guide (External)': extCos(s), 'Date of Joining': s.date_of_joining ?? '', 'Admission Cycle': s.cycle ?? '',
     'Uploaded On': s.added_on ?? '', Remarks: s.remarks ?? ''})},
@@ -512,7 +524,8 @@ function fromSheet(tabs){
       ...splitList(r['Co-Guide (External)']).map(n => ({external_name: n}))]};
   };
   d.students = tabObjects(tabs.Graduated).map(r => ({id: Number(r.ID), roll_no: String(r['Roll No.']).trim().toUpperCase(), name: String(r['Name of the Scholar']).trim().toUpperCase(),
-    gender: r.Gender ?? '', grad_year: parseInt(String(r['Year of Graduation']).slice(0, 4)) || 0, remarks: r.Remarks ?? '', ...people(r)}));
+    gender: r.Gender ?? '', grad_year: parseInt(String(r['Year of Graduation']).slice(0, 4)) || 0,
+    grad_sem: parseSem(r['Semester of Graduation']), remarks: r.Remarks ?? '', ...people(r)}));
   d.scholars = tabObjects(tabs.Scholars).map(r => ({id: Number(r.ID), roll_no: String(r['Roll No.']).trim().toUpperCase(), name: String(r['Name of the Scholar']).trim().toUpperCase(),
     gender: r.Gender ?? '', scheme: r.Scheme ?? '', programme: r.Programme ?? '', date_of_joining: r['Date of Joining'] ?? '', cycle: r['Admission Cycle'] ?? '',
     added_on: r['Uploaded On'] ?? '', remarks: r.Remarks ?? '', ...people(r)}));
@@ -663,12 +676,14 @@ function compute(){
   const ref = refDate(), w = windows(ref), y5 = new Set(w.y5), y3 = new Set(w.y3);
   const fac = D.faculty.map(f => ({...f, credits: []}));
   const by = Object.fromEntries(fac.map(f => [f.id, f]));
-  const students = D.students.map(s => ({...s, guide: by[s.guide_id]?.name ?? s.guide_name ?? '?', ay: ayLabel(s.grad_year),
-      coguides: s.coguides.map(c => ({...c, name: c.faculty_id ? by[c.faculty_id]?.name : c.external_name, external: !c.faculty_id}))}))
-    .sort((a,b) => a.guide.localeCompare(b.guide) || a.grad_year - b.grad_year || a.roll_no.localeCompare(b.roll_no));
+  const students = D.students.map(s => { const sem = gradSem(s, w.current);
+      return {...s, guide: by[s.guide_id]?.name ?? s.guide_name ?? '?', ay: ayLabel(s.grad_year), sem, sem_label: semLabel(sem),
+        in5: y5.has(sem), in3: y3.has(sem),
+        coguides: s.coguides.map(c => ({...c, name: c.faculty_id ? by[c.faculty_id]?.name : c.external_name, external: !c.faculty_id}))}; })
+    .sort((a,b) => a.guide.localeCompare(b.guide) || a.sem - b.sem || a.roll_no.localeCompare(b.roll_no));
   for (const s of students) for (const [fid, role, credit] of studentCredits(s)) {
-    by[fid]?.credits.push({student_id: s.id, roll_no: s.roll_no, student: s.name, ay: s.ay, grad_year: s.grad_year,
-                           role, credit, in5: y5.has(s.grad_year), in3: y3.has(s.grad_year)});
+    by[fid]?.credits.push({student_id: s.id, roll_no: s.roll_no, student: s.name, ay: s.ay, grad_year: s.grad_year, sem: s.sem,
+                           sem_label: s.sem_label, sem_set: !!s.grad_sem, role, credit, in5: s.in5, in3: s.in3});
   }
   const entries = rollEntries();
   for (const f of fac) {
@@ -681,7 +696,8 @@ function compute(){
   const active = fac.filter(f => f.active).sort((a,b) => b.c5 - a.c5 || b.c3 - a.c3 || a.name.localeCompare(b.name));
   const inactive = fac.filter(f => !f.active).sort((a,b) => a.name.localeCompare(b.name));
   return {ref_date: localISO(ref), ref_date_setting: D.settings.ref_date || '', department: D.settings.department || 'DEPARTMENT',
-          windows: {current: ayLabel(w.current), y5: w.y5.map(ayLabel), y3: w.y3.map(ayLabel)},
+          windows: {current: semLabel(w.current), cur: w.current, ay: ayLabel(w.ay), y5: w.y5.map(semLabel), y3: w.y3.map(semLabel),
+                    s5: w.y5, s3: w.y3},
           faculty: [...active, ...inactive], students};
 }
 
@@ -703,23 +719,27 @@ function saveStudent(data, sid){
   const guide = facById(guideId);
   if (!guide) throw new Error('Unknown guide');
   if (year < 1990 || year > 2100) throw new Error('Year of graduation looks wrong');
+  const sem = parseSem(data.grad_sem);
+  if (!sem && sid == null) throw new Error('Choose the semester of graduation (Jan–Jun or Jul–Dec)');
+  if (sem && semOfAy(year, sem) > semOf(refDate())) throw new Error(`${SEM_NAME[sem]} of AY ${ayLabel(year)} has not started yet`);
+  const when = `AY ${ayLabel(year)}${sem ? ', ' + semLabel(semOfAy(year, sem)) : ', semester not set'}`;
   const coIds = (data.coguide_ids || []).map(Number);
   if (coIds.includes(guideId)) throw new Error('The guide cannot also be a co-guide');
   const ext = String(data.external_coguides || '').split(/[;\n]/).map(s => s.trim()).filter(Boolean);
   if (D.students.some(s => s.roll_no === roll && s.id !== sid)) throw new Error(`Roll number ${roll} already exists`);
   const rec = {roll_no: roll, name, gender: String(data.gender || '').trim().toUpperCase().slice(0,1), guide_id: guideId,
-               grad_year: year, remarks: String(data.remarks || '').trim(),
+               grad_year: year, grad_sem: sem, remarks: String(data.remarks || '').trim(),
                coguides: [...coIds.map(id => ({faculty_id: id})), ...ext.map(e => ({external_name: e}))]};
   if (sid == null) {
     sid = newId();
     D.students.push({id: sid, ...rec});
-    log('add student', `${roll} ${name} — guide ${guide.name}, AY ${ayLabel(year)}`);
+    log('add student', `${roll} ${name} — guide ${guide.name}, ${when}`);
     D.scholars = D.scholars.filter(x => x.roll_no !== roll);
   } else {
     const s = D.students.find(x => x.id === sid);
     if (!s) throw new Error('Student not found');
     Object.assign(s, rec);
-    log('edit student', `${roll} ${name} — guide ${guide.name}, AY ${ayLabel(year)}`);
+    log('edit student', `${roll} ${name} — guide ${guide.name}, ${when}`);
   }
   persist();
   return sid;
@@ -874,6 +894,8 @@ ${sheets.map((s, i) => `<sheet name="${xmlEsc(s.name)}" sheetId="${i+1}" r:id="r
   return zip(files);
 }
 
+const semText = s => s.sem_label + ((s.sem_set ?? !!s.grad_sem) ? '' : ' (semester not set)');
+
 function buildWorkbook(st){
   const active = st.faculty.filter(f => f.active);
   const asOn = st.ref_date.split('-').reverse().join('-');
@@ -885,7 +907,7 @@ function buildWorkbook(st){
   const B = v => ({v, s: 3}), F2 = (f, v) => ({f, v, s: 4}), F = (f, v) => ({f, v, s: 3});
   const rows = [
     [{v: st.department, s: 5}],
-    [{v: `GRADUATING CAPACITY AS ON ${asOn} (last 5 years: AY ${st.windows.y5[0]} to ${st.windows.y5.at(-1)}; last 3 years: AY ${st.windows.y3[0]} to ${st.windows.y3.at(-1)})`, s: 5}],
+    [{v: `GRADUATING CAPACITY AS ON ${asOn} (last 5 years: ${st.windows.y5[0]} to ${st.windows.y5.at(-1)}; last 3 years: ${st.windows.y3[0]} to ${st.windows.y3.at(-1)})`, s: 5}],
     headers.map(h => ({v: h, s: 2})),
   ];
   active.forEach((f, i) => {
@@ -902,21 +924,24 @@ function buildWorkbook(st){
     merges: ['A1:P1', 'A2:P2'], freeze: [2, 3], rowHeights: {2: 75}, landscape: true, printTitles: '$3:$3'};
 
   const bold = arr => arr.map(v => ({v, s: 1}));
-  const credit = {name: 'Credit breakdown', rows: [bold(['Faculty', 'Roll No.', 'Scholar', 'Year of Graduation', 'Role', 'Credit', 'Counted in last 5 years', 'Counted in last 3 years'])],
-    widths: [28, 12, 32, 16, 12, 8, 12, 12], freeze: [0, 1]};
-  for (const f of active) for (const c of [...f.credits].sort((a, b) => a.grad_year - b.grad_year || a.roll_no.localeCompare(b.roll_no)))
-    credit.rows.push([f.name, c.roll_no, c.student, c.ay, c.role, c.credit, c.in5 ? 'Yes' : 'No', c.in3 ? 'Yes' : 'No']);
+  const credit = {name: 'Credit breakdown', rows: [bold(['Faculty', 'Roll No.', 'Scholar', 'Year of Graduation', 'Semester of Graduation', 'Role', 'Credit', 'Counted in last 5 years', 'Counted in last 3 years'])],
+    widths: [28, 12, 32, 16, 22, 12, 8, 12, 12], freeze: [0, 1]};
+  for (const f of active) for (const c of [...f.credits].sort((a, b) => a.sem - b.sem || a.roll_no.localeCompare(b.roll_no)))
+    credit.rows.push([f.name, c.roll_no, c.student, c.ay, semText(c), c.role, c.credit, c.in5 ? 'Yes' : 'No', c.in3 ? 'Yes' : 'No']);
 
   const onRoll = {name: 'On-roll breakdown', rows: [bold(['Faculty', 'Roll No.', 'Scholar', 'Role', 'Load'])], widths: [28, 12, 32, 12, 8], freeze: [0, 1]};
   for (const f of active) for (const r of f.on_roll) onRoll.rows.push([f.name, r.roll_no, r.student, r.role, r.credit]);
 
-  const reg = {name: 'Graduated scholars', rows: [bold(['S.No.', 'Roll No.', 'Name of the Scholar', 'Gender', 'Guide', 'Co-Guide', 'Year of Graduation', 'Remarks'])],
-    widths: [7, 12, 32, 8, 30, 45, 16, 20], freeze: [0, 1]};
+  const reg = {name: 'Graduated scholars', rows: [bold(['S.No.', 'Roll No.', 'Name of the Scholar', 'Gender', 'Guide', 'Co-Guide', 'Year of Graduation', 'Semester of Graduation', 'Remarks'])],
+    widths: [7, 12, 32, 8, 30, 45, 16, 22, 20], freeze: [0, 1]};
   st.students.forEach((s, i) => reg.rows.push([i+1, s.roll_no, s.name, s.gender, 'Dr. ' + s.guide,
-    s.coguides.map(c => (c.external ? '' : 'Dr. ') + c.name).join('; '), s.ay, s.remarks]));
+    s.coguides.map(c => (c.external ? '' : 'Dr. ') + c.name).join('; '), s.ay, semText(s), s.remarks]));
 
   const rules = {name: 'Rules', widths: [42, 70], rows: [
-    ['Reference date', st.ref_date], ['Last 5 years', st.windows.y5.join(', ')], ['Last 3 years', st.windows.y3.join(', ')],
+    ['Reference date', st.ref_date], ['Current semester', st.windows.current],
+    ['Last 5 years', `${st.windows.y5[0]} to ${st.windows.y5.at(-1)} (the current semester and the 9 before it)`],
+    ['Last 3 years', `${st.windows.y3[0]} to ${st.windows.y3.at(-1)} (the current semester and the 5 before it)`],
+    ['Semesters', 'Jan–Jun (even) and Jul–Dec (odd). A graduate with no semester recorded is taken as Jan–Jun of their academic year, or the current semester if that is later.'],
     ['Credit (sole guide)', 1], ['Credit (guide, when there is a co-guide)', 0.5], ['Credit (each department co-guide)', 0.5],
     ['GC', 'MAX(1, adjusted C/5, adjusted E/3); values below 1 are rounded up to 1'], ['CAP', 'ROUND(5*GC - N1, 0)'],
     ['TOTAL', 'Current scholars: sole guide 1; with any co-guide, the guide gets 0.5 and each department co-guide gets 0.5']].map(([a, b]) => [{v: a, s: 1}, b])};
@@ -944,12 +969,12 @@ function refresh(){
   byId = Object.fromEntries(S.faculty.map(f => [f.id, f]));
   $('dept').textContent = S.department;
   $('asof').textContent = dmy(S.ref_date) + (S.ref_date_setting ? ' (fixed)' : '');
-  $('curay').textContent = S.windows.current;
-  $('w5').innerHTML = S.windows.y5.map(y => `<span class="chip">${y}</span>`).join('');
-  $('w3').innerHTML = S.windows.y3.map(y => `<span class="chip">${y}</span>`).join('');
+  $('curay').textContent = `${S.windows.current} (AY ${S.windows.ay})`;
+  $('w5').textContent = `${S.windows.y5[0]} to ${S.windows.y5.at(-1)} (10 semesters)`;
+  $('w3').textContent = `${S.windows.y3[0]} to ${S.windows.y3.at(-1)} (6 semesters)`;
   $('p-dept').textContent = S.department;
   $('p-title').textContent = 'GRADUATING CAPACITY AS ON ' + dmy(S.ref_date);
-  $('p-win').textContent = `Last 5 years: AY ${S.windows.y5[0]} to ${S.windows.y5.at(-1)} · Last 3 years: AY ${S.windows.y3[0]} to ${S.windows.y3.at(-1)}`;
+  $('p-win').textContent = `Last 5 years: ${S.windows.y5[0]} to ${S.windows.y5.at(-1)} · Last 3 years: ${S.windows.y3[0]} to ${S.windows.y3.at(-1)}`;
   $('s-dept').value = S.department; $('s-ref').value = S.ref_date_setting;
   $('empty-note').classList.toggle('hidden', D.faculty.length > 0);
   $('data-status').textContent = `${D.faculty.length} faculty, ${D.students.length} graduated scholars, ${D.scholars.length} scholars on the list.`;
@@ -960,7 +985,7 @@ const active = () => S.faculty.filter(f => f.active);
 
 function renderKpis(){
   const a = active(), sum = k => a.reduce((s, f) => s + f[k], 0);
-  const counted = S.students.filter(s => S.windows.y5.includes(s.ay)).length;
+  const counted = S.students.filter(s => s.in5).length, noSem = S.students.filter(s => !s.grad_sem).length;
   $('kpis').innerHTML = [
     [a.length, 'Active faculty'],
     [fmt(sum('cap')), 'Total CAP (sum of column L)'],
@@ -968,6 +993,7 @@ function renderKpis(){
     [fmt(a.filter(f => f.available > 0).reduce((s, f) => s + f.available, 0)), 'Open slots (where CAP > TOTAL)'],
     [a.filter(f => f.available < 0).length, 'Faculty over capacity'],
     [`${counted} / ${S.students.length}`, 'Graduates in 5-yr window / on record'],
+    ...(noSem ? [[noSem, 'Graduates with no semester set (see Graduated scholars)']] : []),
   ].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
 }
 
@@ -975,9 +1001,9 @@ function renderKpis(){
 const CAP_COLS = [
   ['sno','S. No.',1,'Serial number. Faculty are listed by C, then E, then name.'],
   ['name','Guide',0,'Faculty member (active faculty only). Click a row to see the scholars behind the numbers.'],
-  ['c5','Graduated last 5 yrs (C)',1,'Credit for scholars who graduated in the last 5 academic years (July–June), counting the current year and the 4 before it. Sole guide gets 1 per scholar; if the scholar had any co-guide, the guide gets 0.5 and each department co-guide gets 0.5.'],
+  ['c5','Graduated last 5 yrs (C)',1,'Credit for scholars who graduated in the last 5 years: the current semester and the 9 before it (semesters are Jan–Jun and Jul–Dec). Sole guide gets 1 per scholar; if the scholar had any co-guide, the guide gets 0.5 and each department co-guide gets 0.5.'],
   ['gc5','GC_5',1,'C ÷ 5 — graduates per year, averaged over 5 years.'],
-  ['c3','Graduated last 3 yrs (E)',1,'The same credit as C, counted over the last 3 academic years: the current year and the 2 before it.'],
+  ['c3','Graduated last 3 yrs (E)',1,'The same credit as C, counted over the last 3 years: the current semester and the 5 before it.'],
   ['gc3','GC_3',1,'E ÷ 3 — graduates per year, averaged over 3 years.'],
   ['gc5_adj','GC_5 adj.',1,'GC_5, with any value between 0 and 1 rounded up to 1.'],
   ['gc3_adj','GC_3 adj.',1,'GC_3, with any value between 0 and 1 rounded up to 1.'],
@@ -1019,7 +1045,7 @@ $('t-cap').addEventListener('click', e => {
 function showDetail(id){
   const f = byId[id]; detailId = id;
   $('det-title').textContent = 'Dr. ' + f.name + (f.active ? '' : ' (former faculty)');
-  const cr = [...f.credits].sort((a, b) => b.grad_year - a.grad_year || a.roll_no.localeCompare(b.roll_no));
+  const cr = [...f.credits].sort((a, b) => b.sem - a.sem || a.roll_no.localeCompare(b.roll_no));
   $('det-body').innerHTML = `
     <div class="calc">
       <div><span>C — credit for graduates, last 5 yrs (${S.windows.y5[0]} … ${S.windows.y5.at(-1)})</span><b>${fmt(f.c5)}</b></div>
@@ -1034,11 +1060,11 @@ function showDetail(id){
     ${f.joined_on ? `<p class="muted">Joined ${dmy(f.joined_on)}.</p>` : ''}${f.notes ? `<p class="muted">${esc(f.notes)}</p>` : ''}
     ${onRollSection(f)}
     <h3 style="margin-top:18px">Graduated scholars</h3>
-    <table><thead><tr><th class="nosort">Roll No.</th><th class="nosort">Scholar</th><th class="nosort">Year</th><th class="nosort">Role</th><th class="nosort n">Credit</th><th class="nosort">5 yr</th><th class="nosort">3 yr</th><th class="nosort"></th></tr></thead><tbody>
-    ${cr.map(c => `<tr><td>${esc(c.roll_no)}</td><td>${esc(c.student)}</td><td>${c.ay}</td><td>${c.role}</td><td class="n">${fmt(c.credit)}</td>
+    <table><thead><tr><th class="nosort">Roll No.</th><th class="nosort">Scholar</th><th class="nosort">Year</th><th class="nosort">Semester</th><th class="nosort">Role</th><th class="nosort n">Credit</th><th class="nosort">5 yr</th><th class="nosort">3 yr</th><th class="nosort"></th></tr></thead><tbody>
+    ${cr.map(c => `<tr><td>${esc(c.roll_no)}</td><td>${esc(c.student)}</td><td>${c.ay}</td><td>${semCell(c)}</td><td>${c.role}</td><td class="n">${fmt(c.credit)}</td>
       <td>${c.in5 ? '✓' : '<span class="muted">–</span>'}</td><td>${c.in3 ? '✓' : '<span class="muted">–</span>'}</td>
       <td><button class="link" onclick="close_('dlg-det');openStudent(${c.student_id})">Edit</button></td></tr>`).join('')
-      || '<tr><td colspan="8" class="empty">No graduated scholars on record.</td></tr>'}
+      || '<tr><td colspan="9" class="empty">No graduated scholars on record.</td></tr>'}
     </tbody></table>`;
   if (!$('dlg-det').open) $('dlg-det').showModal();
 }
@@ -1092,7 +1118,7 @@ function editFromDetail(){ close_('dlg-det'); openFaculty(detailId); }
 function fillFilters(){
   const ays = [...new Set(S.students.map(s => s.ay))].sort().reverse();
   const keepAy = $('f-ay').value, keepG = $('f-guide').value;
-  $('f-ay').innerHTML = '<option value="">All years</option>' + ays.map(a => `<option>${a}</option>`).join('');
+  $('f-ay').innerHTML = '<option value="">All years</option><option value="nosem">Semester not set</option>' + ays.map(a => `<option>${a}</option>`).join('');
   $('f-guide').innerHTML = '<option value="">All guides / co-guides</option>' +
     [...S.faculty].sort((a, b) => a.name.localeCompare(b.name)).map(f => `<option value="${f.id}">${esc(f.name)}${f.active ? '' : ' (former)'}</option>`).join('');
   $('f-ay').value = keepAy; $('f-guide').value = keepG;
@@ -1100,17 +1126,20 @@ function fillFilters(){
 function renderStudents(){
   const q = $('q-st').value.trim().toUpperCase(), ay = $('f-ay').value, g = +$('f-guide').value;
   let rows = S.students;
-  if (ay) rows = rows.filter(s => s.ay === ay);
+  if (ay) rows = rows.filter(s => ay === 'nosem' ? !s.grad_sem : s.ay === ay);
   if (g) rows = rows.filter(s => s.guide_id === g || s.coguides.some(c => c.faculty_id === g));
   if (q) rows = rows.filter(s => [s.roll_no, s.name, s.guide, ...s.coguides.map(c => c.name)].join(' ').toUpperCase().includes(q));
   $('st-count').textContent = `${rows.length} of ${S.students.length} scholars`;
-  $('t-st').innerHTML = `<thead><tr><th class="nosort">#</th><th class="nosort">Roll No.</th><th class="nosort">Name of the scholar</th><th class="nosort">Gender</th><th class="nosort">Guide</th><th class="nosort">Co-guide(s)</th><th class="nosort">Year of graduation</th><th class="nosort"></th></tr></thead><tbody>` +
+  $('t-st').innerHTML = `<thead><tr><th class="nosort">#</th><th class="nosort">Roll No.</th><th class="nosort">Name of the scholar</th><th class="nosort">Gender</th><th class="nosort">Guide</th><th class="nosort">Co-guide(s)</th><th class="nosort">Year of graduation</th><th class="nosort">Semester</th><th class="nosort"></th></tr></thead><tbody>` +
     (rows.map((s, i) => `<tr><td class="muted">${i+1}</td><td>${esc(s.roll_no)}</td><td>${esc(s.name)}</td><td>${esc(s.gender)}</td>
       <td>${esc(s.guide)}</td><td>${s.coguides.map(c => c.external ? `<span class="muted">${esc(c.name)}</span>` : esc(c.name)).join('<br>')}</td>
-      <td>${s.ay}${S.windows.y5.includes(s.ay) ? '' : ' <span class="muted" title="Outside the 5-year window">(not counted)</span>'}</td>
+      <td>${s.ay}</td><td>${semCell(s)}${s.in5 ? '' : ' <span class="muted" title="Outside the 5-year window">(not counted)</span>'}</td>
       <td><button class="link" onclick="openStudent(${s.id})">Edit</button></td></tr>`).join('')
-    || '<tr><td colspan="8" class="empty">No scholars match.</td></tr>') + '</tbody>';
+    || '<tr><td colspan="9" class="empty">No scholars match.</td></tr>') + '</tbody>';
 }
+
+const semCell = s => (s.sem_set ?? !!s.grad_sem) ? s.sem_label
+  : `<span class="pill zero" title="No semester recorded: taken as ${s.sem_label}. Edit the record to set it.">not set</span>`;
 
 function renderFaculty(){
   const q = $('q-fac').value.trim().toUpperCase(), inc = $('show-inactive').checked;
@@ -1146,9 +1175,21 @@ function facultyOptions(sel){
     '<optgroup label="Former faculty">' + a.filter(f => !f.active).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('') + '</optgroup>';
 }
 function ayOptions(){
-  const cur = +S.windows.current.slice(0, 4), ys = [];
-  for (let y = cur; y >= 2010; y--) ys.push(ayLabel(y));
-  return ys.map(y => `<option value="${y}">${y}${S.windows.y5.includes(y) ? '' : ' (outside window)'}</option>`).join('');
+  const s5 = S.windows.s5, inside = y => ['odd', 'even'].some(h => s5.includes(semOfAy(y, h)));
+  const out = [];
+  for (let y = S.windows.cur >> 1; y >= 2010; y--) {
+    if (semOfAy(y, 'odd') > S.windows.cur) continue;
+    out.push(`<option value="${ayLabel(y)}">${ayLabel(y)}${inside(y) ? '' : ' (outside window)'}</option>`);
+  }
+  return out.join('');
+}
+/* The semester choices name the actual months of the chosen academic year; a semester not yet started is left out. */
+function semOptions(){
+  const y = +$('st-ay').value.slice(0, 4), keep = $('st-sem').value;
+  const opts = [["odd"], ["even"]].filter(([h]) => semOfAy(y, h) <= S.windows.cur)
+    .map(([h]) => `<option value="${h}">${semLabel(semOfAy(y, h))} (${h})</option>`);
+  $('st-sem').innerHTML = (editingStudent ? '<option value="">— not set —</option>' : '<option value="">— choose —</option>') + opts.join('');
+  $('st-sem').value = [...$('st-sem').options].some(o => o.value === keep) ? keep : '';
 }
 function openStudent(id){
   editingStudent = id ?? null;
@@ -1157,7 +1198,8 @@ function openStudent(id){
   facultyOptions($('st-guide')); facultyOptions($('st-co-pick'));
   $('st-ay').innerHTML = ayOptions();
   $('st-roll').value = s?.roll_no || ''; $('st-name').value = s?.name || ''; $('st-gender').value = s?.gender || '';
-  $('st-guide').value = s?.guide_id || ''; $('st-ay').value = s?.ay || S.windows.y5.at(-1);
+  $('st-guide').value = s?.guide_id || ''; $('st-ay').value = s?.ay || S.windows.ay;
+  $('st-sem').innerHTML = `<option value="${s?.grad_sem || ''}"></option>`; $('st-sem').value = s?.grad_sem || ''; semOptions();
   coChosen = s ? s.coguides.filter(c => !c.external).map(c => c.faculty_id) : [];
   $('st-ext').value = s ? s.coguides.filter(c => c.external).map(c => c.name).join('; ') : '';
   $('st-rem').value = s?.remarks || '';
@@ -1172,20 +1214,23 @@ function renderCo(){
   preview();
 }
 function preview(){
-  const g = +$('st-guide').value, ay = $('st-ay').value;
+  const g = +$('st-guide').value, ay = $('st-ay').value, half = $('st-sem').value;
   const ext = $('st-ext').value.split(/[;\n]/).filter(x => x.trim()).length;
   if (!g) { $('st-preview').innerHTML = '<span class="muted">Choose a guide to see the credit.</span>'; return; }
   const hasCo = coChosen.length + ext > 0;
   const lines = [[byId[g].name + (hasCo ? ' (guide)' : ' (sole guide)'), hasCo ? 0.5 : 1], ...coChosen.map(c => [byId[c].name + ' (co-guide)', 0.5])];
-  const where = S.windows.y3.includes(ay) ? 'counted in both the 5-year and 3-year windows'
-    : S.windows.y5.includes(ay) ? 'counted in the 5-year window only' : 'not counted in the current windows';
-  $('st-preview').innerHTML = '<b>Credit this record gives</b>' + lines.map(([n, c]) => `<div><span>${esc(n)}</span><b>${c}</b></div>`).join('') + `<div class="muted">AY ${ay}: ${where}.</div>`;
+  const sem = gradSem({grad_year: +ay.slice(0, 4), grad_sem: half}, S.windows.cur);
+  const where = S.windows.s3.includes(sem) ? 'counted in both the 5-year and 3-year windows'
+    : S.windows.s5.includes(sem) ? 'counted in the 5-year window only' : 'not counted in the current windows';
+  const when = half ? semLabel(sem) : `Semester not set, taken as ${semLabel(sem)}`;
+  $('st-preview').innerHTML = '<b>Credit this record gives</b>' + lines.map(([n, c]) => `<div><span>${esc(n)}</span><b>${c}</b></div>`).join('') + `<div class="muted">${when}: ${where}.</div>`;
 }
-['st-guide', 'st-ay', 'st-ext'].forEach(i => $(i).addEventListener('input', preview));
+$('st-ay').addEventListener('input', semOptions);
+['st-guide', 'st-ay', 'st-sem', 'st-ext'].forEach(i => $(i).addEventListener('input', preview));
 function saveStudentUI(){
   try {
     saveStudent({roll_no: $('st-roll').value, name: $('st-name').value, gender: $('st-gender').value, guide_id: $('st-guide').value,
-      grad_year: $('st-ay').value, coguide_ids: coChosen, external_coguides: $('st-ext').value, remarks: $('st-rem').value}, editingStudent);
+      grad_year: $('st-ay').value, grad_sem: $('st-sem').value, coguide_ids: coChosen, external_coguides: $('st-ext').value, remarks: $('st-rem').value}, editingStudent);
     close_('dlg-st'); refresh(); toast(editingStudent ? 'Scholar updated' : 'Scholar added — capacity recomputed');
   } catch (e) { $('st-err').textContent = e.message; }
 }

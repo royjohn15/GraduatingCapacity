@@ -87,12 +87,23 @@ Any new faculty member it created stays, with 0 on roll.
 
 When a scholar graduates, add them with **+ Graduated scholar** as usual. They leave the current list automatically.
 
+### The 5-year and 3-year windows
+
+IITM has two semesters a year: Jan–Jun (even) and Jul–Dec (odd). "Last 5 years" is the reference date's semester and
+the 9 before it; "last 3 years" is that semester and the 5 before it. In Jul–Dec 2026 that is Jan–Jun 2022 to Jul–Dec 2026
+and Jan–Jun 2024 to Jul–Dec 2026.
+
+Each graduated scholar has a **Year of Graduation** (academic year, e.g. 2024-2025) and a **Semester of Graduation**
+(`Jul-Dec` or `Jan-Jun`; Jul–Dec 2024 and Jan–Jun 2025 make up AY 2024-2025). A record with no semester is taken as
+Jan–Jun of its academic year, or the current semester if that is later. It is marked *not set* in the app; pick
+**Semester not set** in the year filter on the Graduated scholars tab to list them.
+
 ## The Google Sheet
 
 | Tab | Holds | Edit by hand? |
 | --- | --- | --- |
 | Faculty | names, active, N1, on-roll counts | Yes, except the two On Roll columns, which the app rewrites from the Scholars tab |
-| Graduated | graduated scholars, guides by name | Yes |
+| Graduated | graduated scholars, guides by name, year and semester of graduation | Yes |
 | Scholars | current scholars, with their admission cycle; this list decides TOTAL on roll | Yes |
 | Settings | department name, reference date, revision | Department name and reference date only |
 | Capacity | the report table | No, the app rewrites it |
